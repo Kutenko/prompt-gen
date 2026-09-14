@@ -1,163 +1,205 @@
 import { useState, useCallback } from 'react';
 
+/* ───────────── types ───────────── */
 interface PromptData {
+  role: string;
   object: string;
   location: string;
   environment: string;
+  environmentType: string;
   background: string;
   tone: string;
   lighting: string;
   composition: string;
+  lineSource: string;
   angle: string;
   structure: string;
   center: string;
   centerSize: string;
   linearStructure: string;
-  contrast: string;
+  mainColor: string;
+  accentColor: string;
+  textureElement: string;
   style: string;
-  negative: string;
+  format: string;
+  negatives: string[];
+  customNegative: string;
 }
 
-const defaultNegative = `Кадр не должен выглядеть перегруженным, важно соблюдать баланс между объектами и пустым пространством. Использование отрицательного (негативного) пространства помогает выделить предмет, делая его более заметным. Избегай захламления кадра — вокруг главного объекта не должен царить хаос. При этом отсутствие декораций и «пустой» кадр будет скучным и примитивным. Найди баланс.`;
+/* ───────────── options ───────────── */
+const roleOptions = [
+  'Профессиональный фотограф — студийная съёмка, идеальная техника, выверенная композиция',
+  'Fashion-фотограф — глянцевый стиль, подиумная эстетика, акцент на одежде и позе',
+  'Журнальный фотограф — editorial, обложки Vogue/Harper\'s Bazaar, нарратив и атмосфера',
+  'Кинематографист — кинематографичный кадр, анаморфный стиль, глубокая история в кадре',
+  'Арт-директор — концептуальный подход, визуальные метафоры, смелые решения',
+  'Концептуальный художник — абстракция, символизм, выход за рамки коммерческой съёмки',
+  'Документалист — реализм, естественность, без постановки, честный кадр',
+  'Портретист — акцент на лице и эмоциях, работа с характером, психологизм',
+  'Предметный фотограф — product shot, идеальная детализация, коммерческая подача',
+  'Пейзажный фотограф — масштаб, природа, свет, глубина пространства',
+  'Street-фотограф — городская энергия, спонтанность, социальный контекст',
+  'Рекламный фотограф — продающий кадр, чистота, привлекательность, бренд-эстетика',
+];
 
 const toneOptions = [
-  'Бунтарский',
-  'Романтичный',
-  'Драматичный',
-  'Меланхоличный',
-  'Весёлый',
-  'Мистический',
-  'Элегантный',
-  'Агрессивный',
-  'Нежный',
-  'Загадочный',
-  'Ностальгический',
-  'Энергичный',
-  'Спокойный',
-  'Тревожный',
-  'Триумфальный',
+  'Бунтарский', 'Романтичный', 'Драматичный', 'Меланхоличный',
+  'Весёлый', 'Мистический', 'Элегантный', 'Агрессивный',
+  'Нежный', 'Загадочный', 'Ностальгический', 'Энергичный',
+  'Спокойный', 'Тревожный', 'Триумфальный', 'Сенсуальный',
 ];
 
 const lightingOptions = [
-  'High‑key',
-  'Low‑key',
-  'Естественный свет',
-  'Золотой час',
-  'Синий час',
-  'Контровой свет',
-  'Боковой свет',
-  'Мягкий рассеянный',
-  'Жёсткий направленный',
-  'Неоновый',
-  'Свечи',
-  'Студийный',
-  'Rembrandt',
-  'Split lighting',
-  'Butterfly lighting',
+  'High‑key — яркое, равномерное, без резких теней, чистое и воздушное',
+  'Low‑key — глубокие тени, минимум света, драматичность и контраст',
+  'Естественный свет — мягкий, рассеянный, живое ощущение',
+  'Золотой час — тёплый, золотистый, магический свет заката/рассвета',
+  'Синий час — холодный, сумеречный, мистическая атмосфера',
+  'Контровой свет — силуэт, ореол, драматичный контур',
+  'Боковой свет — объём, текстура, выразительные тени',
+  'Мягкий рассеянный — деликатный, обволакивающий, без резких переходов',
+  'Жёсткий направленный — графичный, контрастный, архитектурный',
+  'Неоновый — цветной, футуристичный, городской ночной',
+  'Свечи — тёплый, интимный, мерцающий, живописный',
+  'Студийный — контролируемый, профессиональный, чистый',
+  'Rembrandt — классический портретный, треугольник света на щеке',
+  'Split lighting — половина лица в свете, половина в тени',
+  'Butterfly lighting — гламурный, свет сверху, тень под носом бабочкой',
 ];
 
 const compositionOptions = [
-  'Крест',
-  'Правило третей',
-  'Диагональ',
-  'Симметрия',
-  'Золотое сечение',
-  'Рамка в кадре',
-  'Ведущие линии',
-  'Паттерн',
-  'Треугольник',
-  'Спираль',
-  'Центральная',
-  'Асимметрия',
-  'Минимализм',
+  'Крест — направляющие линии ведут к объекту крестообразно',
+  'Правило третей — объект на пересечении линий сетки 3×3',
+  'Диагональ — динамичная линия, энергия и движение',
+  'Симметрия — зеркальность, порядок, монументальность',
+  'Золотое сечение — спираль Фибоначчи, природная гармония',
+  'Рамка в кадре — объект обрамлён элементами окружения',
+  'Ведущие линии — взгляд следует по линиям к объекту',
+  'Паттерн — повторяющиеся элементы, ритм, текстура',
+  'Треугольник — устойчивая композиция, сила и стабильность',
+  'Спираль — закрученное движение, вовлечение в кадр',
+  'Центральная — объект строго в центре, власть и фокус',
+  'Асимметрия — намеренный дисбаланс, напряжение, интерес',
+  'Минимализм — минимум элементов, максимум смысла',
 ];
 
 const angleOptions = [
-  'Фронтальный',
-  'Сверху (bird eye)',
-  'Снизу (worm eye)',
-  '3/4 спереди',
-  '3/4 сзади',
-  'Профиль',
-  'Сзади',
-  'Голландский угол',
-  'По диагонали сверху',
-  'На уровне глаз',
-  'Сверхвысокий',
-  'Сверхнизкий',
+  'Фронтальный — прямо, глаза в глаза, открытость',
+  'Сверху (bird eye) — вид сверху, всеобъемлющий, уязвимость',
+  'Снизу (worm eye) — вид снизу, монументальность, власть',
+  '3/4 спереди — объёмный, портретный, естественный',
+  '3/4 сзади — загадочность, недосказанность, глубина',
+  'Профиль — силуэт, линия, грация',
+  'Сзади — тайна, отстранённость, приглашение следовать',
+  'Голландский угол — наклон, беспокойство, динамика',
+  'По диагонали сверху — объёмный обзор, перспектива',
+  'На уровне глаз — равенство, интимность, контакт',
+  'Сверхвысокий — панорама, масштаб, отстранённость',
+  'Сверхнизкий — героизация, доминирование, эпичность',
 ];
 
 const structureOptions = [
-  'Одна точка фокуса',
-  'Две точки фокуса',
-  'Три точки фокуса',
-  'Множественные точки',
-  'Распределённый фокус',
-  'Без выраженного фокуса',
+  'Одна точка фокуса', 'Две точки фокуса', 'Три точки фокуса',
+  'Множественные точки', 'Распределённый фокус', 'Без выраженного фокуса',
 ];
 
-const centerOptions = [
-  'Один',
-  'Два',
-  'Три',
-  'Группа',
-  'Рассеянный',
-];
+const centerOptions = ['Один', 'Два', 'Три', 'Группа', 'Рассеянный'];
 
-const centerSizeOptions = [
-  'Малый',
-  'Средний',
-  'Большой',
-  'Доминирующий',
-  'Минимальный',
-];
+const centerSizeOptions = ['Минимальный', 'Малый', 'Средний', 'Большой', 'Доминирующий'];
 
 const linearStructureOptions = [
-  'Вертикальная',
-  'Горизонтальная',
-  'Диагональная',
-  'Криволинейная',
-  'Концентрическая',
-  'Хаотичная',
-  'Лучевая',
-  'S-образная',
+  'Вертикальная', 'Горизонтальная', 'Диагональная',
+  'Криволинейная', 'Концентрическая', 'Хаотичная',
+  'Лучевая', 'S-образная',
 ];
 
 const styleOptions = [
-  'Журнальный',
-  'Кинематографический',
-  'Документальный',
-  'Портретный',
-  'Fashion',
-  'Street',
-  'Fine Art',
-  'Концептуальный',
-  'Ретро',
-  'Футуристический',
-  'Минималистичный',
-  'Барокко',
-  'Поп-арт',
-  'Нуар',
-  'Этнографический',
+  'Журнальный — editorial, обложка, нарратив',
+  'Кинематографический — кинокадр, анаморфный, история',
+  'Документальный — реализм, правда, без ретуши',
+  'Портретный — лицо, эмоция, характер',
+  'Fashion — мода, глянец, подиум',
+  'Street — улица, энергия, спонтанность',
+  'Fine Art — искусство, концепция, галерея',
+  'Концептуальный — идея, метафора, символизм',
+  'Ретро — винтаж, ностальгия, плёнка',
+  'Футуристический — технологии, неон, будущее',
+  'Минималистичный — чистота, простота, пустота',
+  'Барокко — роскошь, детализация, театр',
+  'Поп-арт — яркость, масс-культура, ирония',
+  'Нуар — тень, тайна, контраст',
+  'Этнографический — культура, традиции, аутентичность',
 ];
 
+const formatOptions = ['4:3', '16:9', '1:1', '3:2', '2:3', '9:16', '21:9'];
+
+const negativeItems = [
+  'перегруженный кадр',
+  'лишние предметы рядом с объектом',
+  'хаос',
+  'домашний уют',
+  'резкие тени',
+  'низкая резкость',
+  'зернистость',
+  'натурализм',
+  'передний план',
+  'крупный план',
+  'отсутствие дистанции',
+  'яркие цвета вне палитры',
+  'текст',
+  'логотипы',
+  'блики',
+  'визуальный шум',
+  'плоское изображение',
+  'пересвет',
+  'недоэкспонирование',
+  'размытый объект',
+  'искажённые пропорции',
+  'лишние руки/пальцы',
+  'двойные контуры',
+  'неестественная кожа',
+  'стоковый вид',
+  'банальная композиция',
+  'случайные люди в кадре',
+  'мусор / грязь',
+  'водяные знаки',
+];
+
+/* ───────────── component ───────────── */
 function App() {
   const [data, setData] = useState<PromptData>({
+    role: roleOptions[0],
     object: '',
     location: '',
     environment: '',
+    environmentType: '',
     background: '',
-    tone: toneOptions[0],
+    tone: toneOptions[2],
     lighting: lightingOptions[0],
     composition: compositionOptions[0],
+    lineSource: '',
     angle: angleOptions[0],
     structure: structureOptions[0],
     center: centerOptions[0],
-    centerSize: centerSizeOptions[0],
+    centerSize: centerSizeOptions[1],
     linearStructure: linearStructureOptions[0],
-    contrast: '',
+    mainColor: '',
+    accentColor: '',
+    textureElement: '',
     style: styleOptions[0],
-    negative: defaultNegative,
+    format: formatOptions[0],
+    negatives: [
+      'перегруженный кадр',
+      'лишние предметы рядом с объектом',
+      'хаос',
+      'резкие тени',
+      'низкая резкость',
+      'зернистость',
+      'текст',
+      'логотипы',
+      'блики',
+    ],
+    customNegative: '',
   });
 
   const [generatedPrompt, setGeneratedPrompt] = useState('');
@@ -167,25 +209,67 @@ function App() {
     setData((prev) => ({ ...prev, [field]: value }));
   };
 
-  const generatePrompt = useCallback(() => {
-    const prompt = `INPUT
-Объект: ${data.object || '[укажите объект]'}
-Расположение: ${data.location || '[укажите расположение]'}
-Окружение: ${data.environment || '[укажите окружение]'}
-Фон: ${data.background || '[укажите фон]'}
-Тон и настроение: ${data.tone}
-Освещение: ${data.lighting}
-Композиция: ${data.composition}
-Ракурс: ${data.angle}
-Структура: ${data.structure}
-Композиционный центр: ${data.center}
-Размер композиционного центра: ${data.centerSize}
-Линеарная структура: ${data.linearStructure}
-Контраст и цветовые сочетания: ${data.contrast || '[укажите цвета]'}
-Стиль: ${data.style}
+  const toggleNegative = (item: string) => {
+    setData((prev) => ({
+      ...prev,
+      negatives: prev.negatives.includes(item)
+        ? prev.negatives.filter((n) => n !== item)
+        : [...prev.negatives, item],
+    }));
+  };
 
-NEGATIVE
-${data.negative}`;
+  const selectAllNegatives = () => setData((p) => ({ ...p, negatives: [...negativeItems] }));
+  const clearAllNegatives = () => setData((p) => ({ ...p, negatives: [] }));
+
+  /* ── helpers to extract short label from "label — description" ── */
+  const short = (val: string) => {
+    const idx = val.indexOf(' — ');
+    return idx > -1 ? val.slice(0, idx) : val;
+  };
+
+  /* ── generate ── */
+  const generatePrompt = useCallback(() => {
+    const obj = data.object || '[объект]';
+    const loc = data.location || '[расположение]';
+    const env = data.environment || '[окружение]';
+    const envType = data.environmentType || '[тип окружения]';
+    const bg = data.background || '[фон]';
+    const toneShort = short(data.tone);
+    const lightShort = short(data.lighting);
+    const lightDesc = data.lighting.includes(' — ') ? data.lighting.split(' — ')[1] : '';
+    const compShort = short(data.composition);
+    const compDesc = data.composition.includes(' — ') ? data.composition.split(' — ')[1] : '';
+    const lineSrc = data.lineSource || 'архитектуры, теней, текстур';
+    const angleShort = short(data.angle);
+    const angleDesc = data.angle.includes(' — ') ? data.angle.split(' — ')[1] : '';
+    const tex = data.textureElement || '[ключевой элемент текстуры]';
+    const mainC = data.mainColor || '[основной цвет]';
+    const accC = data.accentColor || '[акцентный цвет]';
+    const styleShort = short(data.style);
+    const fmt = data.format;
+
+    const negativeStr = [
+      ...data.negatives,
+      ...(data.customNegative.trim() ? data.customNegative.split(',').map((s) => s.trim()).filter(Boolean) : []),
+    ].join(', ');
+
+    const prompt = `Ты — ${data.role}. Создай изображение в следующем ключе:
+
+«${obj}» расположен${getEnding(obj)} в ${loc} — на пересечении линий сетки 3×3, занимает примерно 25% площади изображения. Ракурс: ${angleShort} (${angleDesc}), с эффектом дистанции (wide framing) и воздушной перспективой — лёгкая дымка между зрителем и объектом подчёркивает глубину.
+
+Композиция — ${compShort}: ${compDesc}. Направляющие линии (${lineSrc}) мягко ведут взгляд к объекту. Вокруг — обширное негативное пространство, создающее ощущение ${toneShort.toLowerCase()} настроения. Структура — ${data.linearStructure.toLowerCase()}. Фокус: ${data.structure.toLowerCase()}, ${data.centerSize.toLowerCase()} композиционный центр (${data.center.toLowerCase()}).
+
+Освещение — ${lightShort}: ${lightDesc}. Создаёт ${toneShort.toLowerCase()} настроение. Подсветка подчёркивает текстуру ${tex}.
+
+Цветовая гамма: ${mainC} (фон, поверхность, окружение) и ${accC} (объект или акцентная деталь), контраст между ними выделяет композиционный центр.
+
+Фон — размыт (bokeh), затенённый, сохраняет цветовую атмосферу, но не содержит читаемых деталей. Окружение — ${envType}, ${env}, но без визуального шума.
+
+Тон и настроение: ${toneShort}.
+
+Стиль: ${styleShort}, высокая детализация, ${toneShort.toLowerCase()} настроение. Формат ${fmt}.
+
+Negative prompt: ${negativeStr}.`;
 
     setGeneratedPrompt(prompt);
     setCopied(false);
@@ -194,383 +278,302 @@ ${data.negative}`;
   const copyToClipboard = async () => {
     try {
       await navigator.clipboard.writeText(generatedPrompt);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
     } catch {
-      const textarea = document.createElement('textarea');
-      textarea.value = generatedPrompt;
-      document.body.appendChild(textarea);
-      textarea.select();
+      const ta = document.createElement('textarea');
+      ta.value = generatedPrompt;
+      document.body.appendChild(ta);
+      ta.select();
       document.execCommand('copy');
-      document.body.removeChild(textarea);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      document.body.removeChild(ta);
     }
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
   };
 
   const resetForm = () => {
     setData({
+      role: roleOptions[0],
       object: '',
       location: '',
       environment: '',
+      environmentType: '',
       background: '',
-      tone: toneOptions[0],
+      tone: toneOptions[2],
       lighting: lightingOptions[0],
       composition: compositionOptions[0],
+      lineSource: '',
       angle: angleOptions[0],
       structure: structureOptions[0],
       center: centerOptions[0],
-      centerSize: centerSizeOptions[0],
+      centerSize: centerSizeOptions[1],
       linearStructure: linearStructureOptions[0],
-      contrast: '',
+      mainColor: '',
+      accentColor: '',
+      textureElement: '',
       style: styleOptions[0],
-      negative: defaultNegative,
+      format: formatOptions[0],
+      negatives: [
+        'перегруженный кадр',
+        'лишние предметы рядом с объектом',
+        'хаос',
+        'резкие тени',
+        'низкая резкость',
+        'зернистость',
+        'текст',
+        'логотипы',
+        'блики',
+      ],
+      customNegative: '',
     });
     setGeneratedPrompt('');
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900 text-white">
+    <div className="min-h-screen bg-gradient-to-br from-gray-950 via-purple-950 to-gray-950 text-white">
       {/* Header */}
-      <header className="border-b border-purple-500/30 backdrop-blur-sm bg-black/20">
-        <div className="max-w-7xl mx-auto px-4 py-6">
-          <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-purple-400 via-pink-400 to-orange-400 bg-clip-text text-transparent">
-            📸 Генератор промптов для фото
-          </h1>
-          <p className="text-gray-400 mt-2 text-sm md:text-base">
-            Создавайте детальные промпты для генерации фотографий
-          </p>
+      <header className="border-b border-purple-500/20 backdrop-blur-sm bg-black/30 sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between flex-wrap gap-2">
+          <div>
+            <h1 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-purple-400 via-pink-400 to-orange-400 bg-clip-text text-transparent">
+              📸 Prompt Builder
+            </h1>
+            <p className="text-gray-500 text-xs md:text-sm">Генератор промптов для AI-фотографии</p>
+          </div>
+          <div className="flex gap-3">
+            <button
+              onClick={generatePrompt}
+              className="px-5 py-2.5 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-semibold rounded-xl shadow-lg shadow-purple-500/20 transition-all text-sm"
+            >
+              ✨ Генерировать
+            </button>
+            <button
+              onClick={resetForm}
+              className="px-4 py-2.5 bg-gray-800/60 hover:bg-gray-700/60 border border-gray-600/30 text-gray-300 rounded-xl transition-all text-sm"
+            >
+              🔄
+            </button>
+          </div>
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Form Section */}
-          <div className="space-y-6">
-            <div className="bg-black/30 backdrop-blur-sm rounded-2xl border border-purple-500/20 p-6">
-              <h2 className="text-xl font-semibold text-purple-300 mb-4 flex items-center gap-2">
-                <span className="text-2xl">🎯</span> INPUT — Параметры кадра
-              </h2>
+      <main className="max-w-7xl mx-auto px-4 py-6">
+        <div className="grid grid-cols-1 xl:grid-cols-5 gap-6">
+          {/* ─── LEFT: form ─── */}
+          <div className="xl:col-span-3 space-y-5">
+            {/* Role */}
+            <Section icon="🎭" title="Роль" color="amber">
+              <Select label="Роль / ключ работы модели" value={data.role} onChange={(v) => handleChange('role', v)} options={roleOptions} />
+              <p className="text-xs text-gray-500 mt-1">Роль определяет стилистику и подход AI-модели к генерации</p>
+            </Section>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Text Fields */}
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-300 mb-1">
-                    Объект
-                  </label>
-                  <input
-                    type="text"
-                    value={data.object}
-                    onChange={(e) => handleChange('object', e.target.value)}
-                    placeholder="Например: женское бедро в кожаных штанах для йоги"
-                    className="w-full px-4 py-2.5 bg-gray-800/50 border border-purple-500/30 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500/50 transition-all"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">
-                    Расположение
-                  </label>
-                  <input
-                    type="text"
-                    value={data.location}
-                    onChange={(e) => handleChange('location', e.target.value)}
-                    placeholder="Например: асфальт"
-                    className="w-full px-4 py-2.5 bg-gray-800/50 border border-purple-500/30 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500/50 transition-all"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">
-                    Окружение
-                  </label>
-                  <input
-                    type="text"
-                    value={data.environment}
-                    onChange={(e) => handleChange('environment', e.target.value)}
-                    placeholder="Например: городская улица"
-                    className="w-full px-4 py-2.5 bg-gray-800/50 border border-purple-500/30 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500/50 transition-all"
-                  />
-                </div>
-
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-300 mb-1">
-                    Фон
-                  </label>
-                  <input
-                    type="text"
-                    value={data.background}
-                    onChange={(e) => handleChange('background', e.target.value)}
-                    placeholder="Например: закатное солнце"
-                    className="w-full px-4 py-2.5 bg-gray-800/50 border border-purple-500/30 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500/50 transition-all"
-                  />
-                </div>
-
-                {/* Select Fields */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">
-                    Тон и настроение
-                  </label>
-                  <select
-                    value={data.tone}
-                    onChange={(e) => handleChange('tone', e.target.value)}
-                    className="w-full px-4 py-2.5 bg-gray-800/50 border border-purple-500/30 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500/50 transition-all appearance-none cursor-pointer"
-                  >
-                    {toneOptions.map((opt) => (
-                      <option key={opt} value={opt} className="bg-gray-800">
-                        {opt}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">
-                    Освещение
-                  </label>
-                  <select
-                    value={data.lighting}
-                    onChange={(e) => handleChange('lighting', e.target.value)}
-                    className="w-full px-4 py-2.5 bg-gray-800/50 border border-purple-500/30 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500/50 transition-all appearance-none cursor-pointer"
-                  >
-                    {lightingOptions.map((opt) => (
-                      <option key={opt} value={opt} className="bg-gray-800">
-                        {opt}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">
-                    Композиция
-                  </label>
-                  <select
-                    value={data.composition}
-                    onChange={(e) => handleChange('composition', e.target.value)}
-                    className="w-full px-4 py-2.5 bg-gray-800/50 border border-purple-500/30 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500/50 transition-all appearance-none cursor-pointer"
-                  >
-                    {compositionOptions.map((opt) => (
-                      <option key={opt} value={opt} className="bg-gray-800">
-                        {opt}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">
-                    Ракурс
-                  </label>
-                  <select
-                    value={data.angle}
-                    onChange={(e) => handleChange('angle', e.target.value)}
-                    className="w-full px-4 py-2.5 bg-gray-800/50 border border-purple-500/30 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500/50 transition-all appearance-none cursor-pointer"
-                  >
-                    {angleOptions.map((opt) => (
-                      <option key={opt} value={opt} className="bg-gray-800">
-                        {opt}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">
-                    Структура
-                  </label>
-                  <select
-                    value={data.structure}
-                    onChange={(e) => handleChange('structure', e.target.value)}
-                    className="w-full px-4 py-2.5 bg-gray-800/50 border border-purple-500/30 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500/50 transition-all appearance-none cursor-pointer"
-                  >
-                    {structureOptions.map((opt) => (
-                      <option key={opt} value={opt} className="bg-gray-800">
-                        {opt}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">
-                    Композиционный центр
-                  </label>
-                  <select
-                    value={data.center}
-                    onChange={(e) => handleChange('center', e.target.value)}
-                    className="w-full px-4 py-2.5 bg-gray-800/50 border border-purple-500/30 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500/50 transition-all appearance-none cursor-pointer"
-                  >
-                    {centerOptions.map((opt) => (
-                      <option key={opt} value={opt} className="bg-gray-800">
-                        {opt}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">
-                    Размер композиционного центра
-                  </label>
-                  <select
-                    value={data.centerSize}
-                    onChange={(e) => handleChange('centerSize', e.target.value)}
-                    className="w-full px-4 py-2.5 bg-gray-800/50 border border-purple-500/30 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500/50 transition-all appearance-none cursor-pointer"
-                  >
-                    {centerSizeOptions.map((opt) => (
-                      <option key={opt} value={opt} className="bg-gray-800">
-                        {opt}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">
-                    Линеарная структура
-                  </label>
-                  <select
-                    value={data.linearStructure}
-                    onChange={(e) => handleChange('linearStructure', e.target.value)}
-                    className="w-full px-4 py-2.5 bg-gray-800/50 border border-purple-500/30 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500/50 transition-all appearance-none cursor-pointer"
-                  >
-                    {linearStructureOptions.map((opt) => (
-                      <option key={opt} value={opt} className="bg-gray-800">
-                        {opt}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-300 mb-1">
-                    Контраст и цветовые сочетания
-                  </label>
-                  <input
-                    type="text"
-                    value={data.contrast}
-                    onChange={(e) => handleChange('contrast', e.target.value)}
-                    placeholder="Например: тёмно-синий, оранжевый"
-                    className="w-full px-4 py-2.5 bg-gray-800/50 border border-purple-500/30 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500/50 transition-all"
-                  />
-                </div>
-
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-300 mb-1">
-                    Стиль
-                  </label>
-                  <select
-                    value={data.style}
-                    onChange={(e) => handleChange('style', e.target.value)}
-                    className="w-full px-4 py-2.5 bg-gray-800/50 border border-purple-500/30 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500/50 transition-all appearance-none cursor-pointer"
-                  >
-                    {styleOptions.map((opt) => (
-                      <option key={opt} value={opt} className="bg-gray-800">
-                        {opt}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+            {/* Scene */}
+            <Section icon="🎯" title="Сцена" color="purple">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <Input label="Объект" value={data.object} onChange={(v) => handleChange('object', v)} placeholder="женское бедро в кожаных штанах для йоги" full />
+                <Input label="Расположение" value={data.location} onChange={(v) => handleChange('location', v)} placeholder="асфальт" />
+                <Input label="Окружение" value={data.environment} onChange={(v) => handleChange('environment', v)} placeholder="городская улица" />
+                <Input label="Тип окружения" value={data.environmentType} onChange={(v) => handleChange('environmentType', v)} placeholder="интерьер кафе / лофт / арт-пространство" />
+                <Input label="Фон" value={data.background} onChange={(v) => handleChange('background', v)} placeholder="закатное солнце" full />
               </div>
-            </div>
+            </Section>
 
-            {/* Negative Section */}
-            <div className="bg-black/30 backdrop-blur-sm rounded-2xl border border-red-500/20 p-6">
-              <h2 className="text-xl font-semibold text-red-300 mb-4 flex items-center gap-2">
-                <span className="text-2xl">🚫</span> NEGATIVE — Ограничения
-              </h2>
-              <textarea
-                value={data.negative}
-                onChange={(e) => handleChange('negative', e.target.value)}
-                rows={6}
-                className="w-full px-4 py-2.5 bg-gray-800/50 border border-red-500/30 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-red-500/50 focus:border-red-500/50 transition-all resize-y"
-                placeholder="Опишите что НЕ должно быть в кадре..."
+            {/* Mood & Light */}
+            <Section icon="💡" title="Настроение и свет" color="yellow">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <Select label="Тон и настроение" value={data.tone} onChange={(v) => handleChange('tone', v)} options={toneOptions} />
+                <Select label="Освещение" value={data.lighting} onChange={(v) => handleChange('lighting', v)} options={lightingOptions} />
+              </div>
+            </Section>
+
+            {/* Composition */}
+            <Section icon="📐" title="Композиция" color="blue">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <Select label="Композиция" value={data.composition} onChange={(v) => handleChange('composition', v)} options={compositionOptions} />
+                <Input label="Источник направляющих линий" value={data.lineSource} onChange={(v) => handleChange('lineSource', v)} placeholder="текстуры стола, архитектуры, теней" />
+                <Select label="Ракурс" value={data.angle} onChange={(v) => handleChange('angle', v)} options={angleOptions} />
+                <Select label="Линеарная структура" value={data.linearStructure} onChange={(v) => handleChange('linearStructure', v)} options={linearStructureOptions} />
+                <Select label="Структура фокуса" value={data.structure} onChange={(v) => handleChange('structure', v)} options={structureOptions} />
+                <Select label="Композиционный центр" value={data.center} onChange={(v) => handleChange('center', v)} options={centerOptions} />
+                <Select label="Размер центра" value={data.centerSize} onChange={(v) => handleChange('centerSize', v)} options={centerSizeOptions} />
+              </div>
+            </Section>
+
+            {/* Color & Style */}
+            <Section icon="🎨" title="Цвет, текстура, стиль" color="pink">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <Input label="Основной цвет" value={data.mainColor} onChange={(v) => handleChange('mainColor', v)} placeholder="тёмно-синий" />
+                <Input label="Акцентный цвет" value={data.accentColor} onChange={(v) => handleChange('accentColor', v)} placeholder="оранжевый" />
+                <Input label="Ключевой элемент текстуры" value={data.textureElement} onChange={(v) => handleChange('textureElement', v)} placeholder="кожи, ткани, еды" full />
+                <Select label="Стиль" value={data.style} onChange={(v) => handleChange('style', v)} options={styleOptions} />
+                <Select label="Формат" value={data.format} onChange={(v) => handleChange('format', v)} options={formatOptions} />
+              </div>
+            </Section>
+
+            {/* Negative */}
+            <Section icon="🚫" title="Negative prompt — что НЕ нужно" color="red">
+              <div className="flex items-center gap-3 mb-3">
+                <button onClick={selectAllNegatives} className="text-xs px-3 py-1 rounded-lg bg-red-900/30 border border-red-500/30 text-red-300 hover:bg-red-900/50 transition-all">
+                  Выбрать все
+                </button>
+                <button onClick={clearAllNegatives} className="text-xs px-3 py-1 rounded-lg bg-gray-800/50 border border-gray-600/30 text-gray-400 hover:bg-gray-700/50 transition-all">
+                  Очистить
+                </button>
+                <span className="text-xs text-gray-500">Выбрано: {data.negatives.length}</span>
+              </div>
+              <div className="flex flex-wrap gap-2 mb-4">
+                {negativeItems.map((item) => {
+                  const active = data.negatives.includes(item);
+                  return (
+                    <button
+                      key={item}
+                      onClick={() => toggleNegative(item)}
+                      className={`text-xs px-3 py-1.5 rounded-lg border transition-all duration-200 ${
+                        active
+                          ? 'bg-red-600/30 border-red-500/50 text-red-200 shadow-sm shadow-red-500/10'
+                          : 'bg-gray-800/30 border-gray-700/30 text-gray-500 hover:border-gray-500/50 hover:text-gray-400'
+                      }`}
+                    >
+                      {active ? '✕ ' : '+ '}{item}
+                    </button>
+                  );
+                })}
+              </div>
+              <Input
+                label="Дополнительные ограничения (через запятую)"
+                value={data.customNegative}
+                onChange={(v) => handleChange('customNegative', v)}
+                placeholder="дым, вода, животные..."
               />
-            </div>
+            </Section>
 
-            {/* Action Buttons */}
-            <div className="flex flex-wrap gap-4">
-              <button
-                onClick={generatePrompt}
-                className="flex-1 min-w-[200px] px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-semibold rounded-xl shadow-lg shadow-purple-500/25 transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98]"
-              >
-                ✨ Сгенерировать промпт
-              </button>
-              <button
-                onClick={resetForm}
-                className="px-6 py-3 bg-gray-700/50 hover:bg-gray-600/50 border border-gray-500/30 text-gray-300 font-semibold rounded-xl transition-all duration-300"
-              >
-                🔄 Сбросить
-              </button>
-            </div>
+            {/* Mobile generate button */}
+            <button
+              onClick={generatePrompt}
+              className="w-full xl:hidden px-6 py-3.5 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-semibold rounded-xl shadow-lg shadow-purple-500/20 transition-all"
+            >
+              ✨ Сгенерировать промпт
+            </button>
           </div>
 
-          {/* Output Section */}
-          <div className="lg:sticky lg:top-8 lg:self-start">
-            <div className="bg-black/30 backdrop-blur-sm rounded-2xl border border-green-500/20 p-6">
-              <h2 className="text-xl font-semibold text-green-300 mb-4 flex items-center gap-2">
-                <span className="text-2xl">📝</span> Сгенерированный промпт
-              </h2>
-
-              {generatedPrompt ? (
-                <div className="relative">
-                  <pre className="whitespace-pre-wrap bg-gray-900/80 border border-gray-700/50 rounded-xl p-4 text-sm text-gray-200 font-mono leading-relaxed max-h-[600px] overflow-y-auto">
-                    {generatedPrompt}
-                  </pre>
+          {/* ─── RIGHT: output ─── */}
+          <div className="xl:col-span-2 space-y-5 xl:sticky xl:top-24 xl:self-start">
+            <div className="bg-black/30 backdrop-blur-sm rounded-2xl border border-green-500/20 p-5">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-semibold text-green-300 flex items-center gap-2">
+                  <span>📝</span> Готовый промпт
+                </h2>
+                {generatedPrompt && (
                   <button
                     onClick={copyToClipboard}
-                    className={`absolute top-3 right-3 px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-300 ${
-                      copied
-                        ? 'bg-green-600 text-white'
-                        : 'bg-gray-700 hover:bg-gray-600 text-gray-300'
+                    className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-300 ${
+                      copied ? 'bg-green-600 text-white' : 'bg-gray-700 hover:bg-gray-600 text-gray-300'
                     }`}
                   >
                     {copied ? '✓ Скопировано!' : '📋 Копировать'}
                   </button>
-                </div>
+                )}
+              </div>
+
+              {generatedPrompt ? (
+                <pre className="whitespace-pre-wrap bg-gray-900/80 border border-gray-700/50 rounded-xl p-4 text-[13px] text-gray-200 font-mono leading-relaxed max-h-[70vh] overflow-y-auto selection:bg-purple-500/30">
+                  {generatedPrompt}
+                </pre>
               ) : (
-                <div className="bg-gray-900/50 border border-dashed border-gray-600/50 rounded-xl p-8 text-center">
-                  <div className="text-5xl mb-4">🎨</div>
-                  <p className="text-gray-400 text-sm">
-                    Заполните параметры и нажмите «Сгенерировать промпт»
-                  </p>
+                <div className="bg-gray-900/40 border border-dashed border-gray-700/50 rounded-xl p-10 text-center">
+                  <div className="text-5xl mb-3">🎨</div>
+                  <p className="text-gray-500 text-sm">Заполните параметры и нажмите<br /><span className="text-purple-400 font-medium">«Генерировать»</span></p>
                 </div>
               )}
             </div>
 
-            {/* Quick Tips */}
-            <div className="mt-6 bg-black/30 backdrop-blur-sm rounded-2xl border border-yellow-500/20 p-6">
-              <h3 className="text-lg font-semibold text-yellow-300 mb-3 flex items-center gap-2">
-                <span>💡</span> Советы
-              </h3>
-              <ul className="space-y-2 text-sm text-gray-400">
-                <li className="flex items-start gap-2">
-                  <span className="text-yellow-500 mt-0.5">•</span>
-                  <span>Будьте конкретны в описании объекта — это ключевой элемент</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-yellow-500 mt-0.5">•</span>
-                  <span>Комбинация освещения и тона создаёт атмосферу кадра</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-yellow-500 mt-0.5">•</span>
-                  <span>Цветовые сочетания влияют на эмоциональное восприятие</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-yellow-500 mt-0.5">•</span>
-                  <span>Negative промпт помогает избежать нежелательных элементов</span>
-                </li>
+            {/* Tips */}
+            <div className="bg-black/30 backdrop-blur-sm rounded-2xl border border-yellow-500/15 p-5">
+              <h3 className="text-sm font-semibold text-yellow-300/80 mb-2 flex items-center gap-2">💡 Подсказки</h3>
+              <ul className="space-y-1.5 text-xs text-gray-500">
+                <li>• <b className="text-gray-400">Роль</b> задаёт общий стиль и подход модели</li>
+                <li>• <b className="text-gray-400">Освещение + Тон</b> создают атмосферу</li>
+                <li>• <b className="text-gray-400">Цвета</b> определяют палитру и контраст</li>
+                <li>• <b className="text-gray-400">Negative</b> убирает нежелательные элементы</li>
+                <li>• Описания в выпадающих списках — подсказки, в промпт идёт короткое название</li>
               </ul>
             </div>
           </div>
         </div>
       </main>
 
-      {/* Footer */}
-      <footer className="border-t border-purple-500/20 mt-12 py-6 text-center text-gray-500 text-sm">
-        <p>Генератор промптов для AI-фотографии • 2026</p>
+      <footer className="border-t border-purple-500/10 mt-8 py-4 text-center text-gray-600 text-xs">
+        Prompt Builder • 2026
       </footer>
+    </div>
+  );
+}
+
+/* ───────────── helpers ───────────── */
+function getEnding(obj: string) {
+  const lower = obj.toLowerCase();
+  if (lower.includes('бедро') || lower.includes('нога') || lower.includes('рука')) return 'о';
+  if (lower.includes('лицо') || lower.includes('тело')) return 'о';
+  return '';
+}
+
+/* ───────────── UI primitives ───────────── */
+function Section({ icon, title, color, children }: { icon: string; title: string; color: string; children: React.ReactNode }) {
+  const borderMap: Record<string, string> = {
+    purple: 'border-purple-500/20',
+    yellow: 'border-yellow-500/20',
+    blue: 'border-blue-500/20',
+    pink: 'border-pink-500/20',
+    red: 'border-red-500/20',
+    amber: 'border-amber-500/20',
+    green: 'border-green-500/20',
+  };
+  const titleMap: Record<string, string> = {
+    purple: 'text-purple-300',
+    yellow: 'text-yellow-300',
+    blue: 'text-blue-300',
+    pink: 'text-pink-300',
+    red: 'text-red-300',
+    amber: 'text-amber-300',
+    green: 'text-green-300',
+  };
+  return (
+    <div className={`bg-black/30 backdrop-blur-sm rounded-2xl border ${borderMap[color] || 'border-gray-700/30'} p-5`}>
+      <h2 className={`text-lg font-semibold ${titleMap[color] || 'text-gray-300'} mb-4 flex items-center gap-2`}>
+        <span className="text-xl">{icon}</span> {title}
+      </h2>
+      {children}
+    </div>
+  );
+}
+
+function Input({ label, value, onChange, placeholder, full }: { label: string; value: string; onChange: (v: string) => void; placeholder?: string; full?: boolean }) {
+  return (
+    <div className={full ? 'md:col-span-2' : ''}>
+      <label className="block text-xs font-medium text-gray-400 mb-1">{label}</label>
+      <input
+        type="text"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        className="w-full px-3 py-2 bg-gray-800/50 border border-purple-500/20 rounded-lg text-white text-sm placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-500/40 focus:border-purple-500/40 transition-all"
+      />
+    </div>
+  );
+}
+
+function Select({ label, value, onChange, options }: { label: string; value: string; onChange: (v: string) => void; options: string[] }) {
+  return (
+    <div>
+      <label className="block text-xs font-medium text-gray-400 mb-1">{label}</label>
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="w-full px-3 py-2 bg-gray-800/50 border border-purple-500/20 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/40 focus:border-purple-500/40 transition-all appearance-none cursor-pointer"
+      >
+        {options.map((opt) => (
+          <option key={opt} value={opt} className="bg-gray-800">{opt}</option>
+        ))}
+      </select>
     </div>
   );
 }
