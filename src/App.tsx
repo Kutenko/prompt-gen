@@ -3,6 +3,7 @@ import { useState, useCallback } from 'react';
 /* ───────────── types ───────────── */
 interface PromptData {
   role: string;
+  photoType: string;
   object: string;
   location: string;
   environment: string;
@@ -41,6 +42,36 @@ const roleOptions = [
   'Street-фотограф — городская энергия, спонтанность, социальный контекст',
   'Рекламный фотограф — продающий кадр, чистота, привлекательность, бренд-эстетика',
 ];
+
+const photoTypeOptions = [
+  'Предметная съёмка',
+  'Портрет',
+  'Fashion',
+  'Пейзаж',
+  'Стрит-фото',
+  'Рекламная съёмка',
+  'Концептуальная фотография',
+  'Документальная фотография',
+  'Архитектурная съёмка',
+  'Натюрморт',
+  'Спортивная съёмка',
+  'Свадебная фотография',
+];
+
+const photoTypeDescriptions: Record<string, string> = {
+  'Предметная съёмка': 'Профессиональная предметная съёмка с безупречной детализацией, акцентом на форму, фактуру и материальность объекта, коммерческая эстетика каталога высшего уровня',
+  'Портрет': 'Глубокий психологический портрет, раскрывающий характер и эмоции через выразительный взгляд, игру света и тени, интимную атмосферу взаимодействия с камерой',
+  'Fashion': 'Глянцевая fashion-съёмка в стиле обложек Vogue и Harper\'s Bazaar, подиумная эстетика, акцент на одежде, позе, движении, высокая мода и безупречный стиль',
+  'Пейзаж': 'Эпический пейзаж с масштабной композицией, игрой природного света, глубиной пространства, атмосферными эффектами — туман, дымка, золотой час',
+  'Стрит-фото': 'Городская street-фотография с энергией мегаполиса, спонтанностью момента, социальным контекстом, документальной честностью и художественным видением',
+  'Рекламная съёмка': 'Продающая рекламная съёмка с безупречной чистотой кадра, привлекательностью образа, бренд-эстетикой, коммерческой подачей высшего класса',
+  'Концептуальная фотография': 'Концептуальная фотография с визуальными метафорами, символизмом, выходом за рамки коммерции, художественным высказыванием и философским подтекстом',
+  'Документальная фотография': 'Документальная фотография с реализмом, естественностью, без постановки, честным взглядом на реальность, социальной значимостью и правдивостью момента',
+  'Архитектурная съёмка': 'Архитектурная съёмка с акцентом на линии, формы, геометрию, масштаб сооружений, игру света на фасадах, монументальность и структурную гармонию',
+  'Натюрморт': 'Классический натюрморт с тщательно выстроенной композицией, игрой фактур, глубоким символизмом предметов, живописной эстетикой и вневременной красотой',
+  'Спортивная съёмка': 'Динамичная спортивная съёмка с передачей движения, энергии, напряжения момента,freeze-frame эффектами, эмоциональной интенсивностью и атлетической эстетикой',
+  'Свадебная фотография': 'Романтичная свадебная фотография с нежностью, интимностью, эмоциональной глубиной, сказочной атмосферой, вечной любовью и безупречной красотой момента',
+};
 
 const toneOptions = [
   'Бунтарский', 'Романтичный', 'Драматичный', 'Меланхоличный',
@@ -169,6 +200,7 @@ const negativeItems = [
 function App() {
   const [data, setData] = useState<PromptData>({
     role: roleOptions[0],
+    photoType: photoTypeOptions[0],
     object: '',
     location: '',
     environment: '',
@@ -233,6 +265,11 @@ function App() {
 
     // Role
     if (data.role) blocks.push(`Ты — ${data.role}.`);
+
+    // Photo type (красочное описание)
+    if (data.photoType && photoTypeDescriptions[data.photoType]) {
+      blocks.push(photoTypeDescriptions[data.photoType] + '.');
+    }
 
     // Object + location + environment + background
     const sceneParts: string[] = [];
@@ -310,6 +347,7 @@ function App() {
   const resetForm = () => {
     setData({
       role: roleOptions[0],
+      photoType: photoTypeOptions[0],
       object: '',
       location: '',
       environment: '',
@@ -386,6 +424,7 @@ function App() {
             {/* Scene */}
             <Section icon="🎯" title="Сцена" color="purple">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <Select label="Тип фотографии" value={data.photoType} onChange={(v) => handleChange('photoType', v)} options={photoTypeOptions} full />
                 <Input label="Объект" value={data.object} onChange={(v) => handleChange('object', v)} placeholder="женское бедро в кожаных штанах для йоги" full />
                 <Input label="Расположение" value={data.location} onChange={(v) => handleChange('location', v)} placeholder="асфальт" />
                 <Input label="Окружение" value={data.environment} onChange={(v) => handleChange('environment', v)} placeholder="городская улица" />
@@ -572,9 +611,9 @@ function Input({ label, value, onChange, placeholder, full }: { label: string; v
   );
 }
 
-function Select({ label, value, onChange, options }: { label: string; value: string; onChange: (v: string) => void; options: string[] }) {
+function Select({ label, value, onChange, options, full }: { label: string; value: string; onChange: (v: string) => void; options: string[]; full?: boolean }) {
   return (
-    <div>
+    <div className={full ? 'md:col-span-2' : ''}>
       <label className="block text-xs font-medium text-gray-400 mb-1">{label}</label>
       <select
         value={value}
