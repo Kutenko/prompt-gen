@@ -229,47 +229,66 @@ function App() {
 
   /* ── generate ── */
   const generatePrompt = useCallback(() => {
-    const obj = data.object || '[объект]';
-    const loc = data.location || '[расположение]';
-    const env = data.environment || '[окружение]';
-    const envType = data.environmentType || '[тип окружения]';
-    const toneShort = short(data.tone);
-    const lightShort = short(data.lighting);
-    const compShort = short(data.composition);
-    const lineSrc = data.lineSource || '[источник линий]';
-    const angleShort = short(data.angle);
-    const tex = data.textureElement || '[элемент текстуры]';
-    const mainC = data.mainColor || '[основной цвет]';
-    const accC = data.accentColor || '[акцентный цвет]';
-    const styleShort = short(data.style);
-    const fmt = data.format;
+    const blocks: string[] = [];
 
-    const negativeStr = [
+    // Role
+    if (data.role) blocks.push(`Ты — ${data.role}.`);
+
+    // Object + location + environment + background
+    const sceneParts: string[] = [];
+    if (data.object) sceneParts.push(`«${data.object}»`);
+    if (data.location) sceneParts.push(`на ${data.location}`);
+    if (sceneParts.length) {
+      let scene = sceneParts.join(' ');
+      if (data.environment || data.environmentType) {
+        const envParts = [data.environment, data.environmentType].filter(Boolean).join(', ');
+        scene += `, в окружении ${envParts}`;
+      }
+      if (data.background) scene += `, на фоне «${data.background}»`;
+      blocks.push(scene + '.');
+    }
+
+    // Tone + lighting
+    const moodParts: string[] = [];
+    if (data.tone) moodParts.push(`настроение — ${short(data.tone).toLowerCase()}`);
+    if (data.lighting) moodParts.push(`освещение ${short(data.lighting).toLowerCase()}`);
+    if (moodParts.length) blocks.push(moodParts.join(', ') + '.');
+
+    // Composition + lines + angle
+    const compParts: string[] = [];
+    if (data.composition) compParts.push(`композиция «${short(data.composition)}»`);
+    if (data.lineSource) compParts.push(`направляющие линии — ${data.lineSource}`);
+    if (data.angle) compParts.push(`ракурс ${short(data.angle).toLowerCase()}`);
+    if (compParts.length) blocks.push(compParts.join(', ') + '.');
+
+    // Structure + focus
+    const structParts: string[] = [];
+    if (data.linearStructure) structParts.push(`структура ${data.linearStructure.toLowerCase()}`);
+    const focusParts = [data.structure, data.center, data.centerSize].filter(Boolean).map((v) => v.toLowerCase());
+    if (focusParts.length) structParts.push(`фокус — ${focusParts.join(', ')}`);
+    if (structParts.length) blocks.push(structParts.join(', ') + '.');
+
+    // Color + texture
+    const colorParts: string[] = [];
+    const colors = [data.mainColor, data.accentColor].filter(Boolean);
+    if (colors.length) colorParts.push(`палитра: ${colors.join(' и ')}`);
+    if (data.textureElement) colorParts.push(`текстура — ${data.textureElement}`);
+    if (colorParts.length) blocks.push(colorParts.join(', ') + '.');
+
+    // Style + format
+    const styleParts: string[] = [];
+    if (data.style) styleParts.push(`стиль — ${short(data.style)}`);
+    if (data.format) styleParts.push(`формат ${data.format}`);
+    if (styleParts.length) blocks.push(styleParts.join(', ') + '.');
+
+    // Negative
+    const negativeList = [
       ...data.negatives,
       ...(data.customNegative.trim() ? data.customNegative.split(',').map((s) => s.trim()).filter(Boolean) : []),
-    ].join(', ');
+    ];
+    if (negativeList.length) blocks.push(`Negative prompt: ${negativeList.join(', ')}.`);
 
-    const prompt = `Ты — ${data.role}.
-
-Объект: ${obj}.
-Расположение: ${loc}.
-Окружение: ${env}, ${envType}.
-Фон: ${data.background || '[фон]'}.
-Тон: ${toneShort}.
-Освещение: ${lightShort}.
-Композиция: ${compShort}.
-Направляющие линии: ${lineSrc}.
-Ракурс: ${angleShort}.
-Структура: ${data.linearStructure.toLowerCase()}.
-Фокус: ${data.structure.toLowerCase()}, ${data.center.toLowerCase()}, ${data.centerSize.toLowerCase()}.
-Цвет: ${mainC}, ${accC}.
-Текстура: ${tex}.
-Стиль: ${styleShort}.
-Формат: ${fmt}.
-
-Negative prompt: ${negativeStr}.`;
-
-    setGeneratedPrompt(prompt);
+    setGeneratedPrompt(blocks.join('\n\n'));
     setCopied(false);
   }, [data]);
 
