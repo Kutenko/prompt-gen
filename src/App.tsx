@@ -233,16 +233,12 @@ function App() {
     const loc = data.location || '[расположение]';
     const env = data.environment || '[окружение]';
     const envType = data.environmentType || '[тип окружения]';
-    const bg = data.background || '[фон]';
     const toneShort = short(data.tone);
     const lightShort = short(data.lighting);
-    const lightDesc = data.lighting.includes(' — ') ? data.lighting.split(' — ')[1] : '';
     const compShort = short(data.composition);
-    const compDesc = data.composition.includes(' — ') ? data.composition.split(' — ')[1] : '';
-    const lineSrc = data.lineSource || 'архитектуры, теней, текстур';
+    const lineSrc = data.lineSource || '[источник линий]';
     const angleShort = short(data.angle);
-    const angleDesc = data.angle.includes(' — ') ? data.angle.split(' — ')[1] : '';
-    const tex = data.textureElement || '[ключевой элемент текстуры]';
+    const tex = data.textureElement || '[элемент текстуры]';
     const mainC = data.mainColor || '[основной цвет]';
     const accC = data.accentColor || '[акцентный цвет]';
     const styleShort = short(data.style);
@@ -253,21 +249,20 @@ function App() {
       ...(data.customNegative.trim() ? data.customNegative.split(',').map((s) => s.trim()).filter(Boolean) : []),
     ].join(', ');
 
-    const prompt = `Ты — ${data.role}. Создай изображение в следующем ключе:
+    const prompt = `Ты — ${data.role}.
 
-«${obj}» расположен${getEnding(obj)} в ${loc} — на пересечении линий сетки 3×3, занимает примерно 25% площади изображения. Ракурс: ${angleShort} (${angleDesc}), с эффектом дистанции (wide framing) и воздушной перспективой — лёгкая дымка между зрителем и объектом подчёркивает глубину.
-
-Композиция — ${compShort}: ${compDesc}. Направляющие линии (${lineSrc}) мягко ведут взгляд к объекту. Вокруг — обширное негативное пространство, создающее ощущение ${toneShort.toLowerCase()} настроения. Структура — ${data.linearStructure.toLowerCase()}. Фокус: ${data.structure.toLowerCase()}, ${data.centerSize.toLowerCase()} композиционный центр (${data.center.toLowerCase()}).
-
-Освещение — ${lightShort}: ${lightDesc}. Создаёт ${toneShort.toLowerCase()} настроение. Подсветка подчёркивает текстуру ${tex}.
-
-Цветовая гамма: ${mainC} (фон, поверхность, окружение) и ${accC} (объект или акцентная деталь), контраст между ними выделяет композиционный центр.
-
-Фон — размыт (bokeh), затенённый, сохраняет цветовую атмосферу, но не содержит читаемых деталей. Окружение — ${envType}, ${env}, но без визуального шума.
-
-Тон и настроение: ${toneShort}.
-
-Стиль: ${styleShort}, высокая детализация, ${toneShort.toLowerCase()} настроение. Формат ${fmt}.
+Объект: ${obj}.
+Расположение: ${loc}, пересечение линий сетки 3×3, 25% площади.
+Ракурс: ${angleShort}, wide framing, воздушная перспектива.
+Композиция: ${compShort}, направляющие линии — ${lineSrc}, негативное пространство.
+Структура: ${data.linearStructure.toLowerCase()}, ${data.structure.toLowerCase()}, ${data.centerSize.toLowerCase()} центр, ${data.center.toLowerCase()}.
+Освещение: ${lightShort}, акцент на текстуру — ${tex}.
+Цвет: ${mainC} (фон, поверхность), ${accC} (акцент).
+Фон: ${data.background || '[фон]'}, bokeh, затенён, без читаемых деталей.
+Окружение: ${envType}, ${env}, без визуального шума.
+Тон: ${toneShort}.
+Стиль: ${styleShort}, высокая детализация.
+Формат: ${fmt}.
 
 Negative prompt: ${negativeStr}.`;
 
@@ -509,12 +504,6 @@ Negative prompt: ${negativeStr}.`;
 }
 
 /* ───────────── helpers ───────────── */
-function getEnding(obj: string) {
-  const lower = obj.toLowerCase();
-  if (lower.includes('бедро') || lower.includes('нога') || lower.includes('рука')) return 'о';
-  if (lower.includes('лицо') || lower.includes('тело')) return 'о';
-  return '';
-}
 
 /* ───────────── UI primitives ───────────── */
 function Section({ icon, title, color, children }: { icon: string; title: string; color: string; children: React.ReactNode }) {
