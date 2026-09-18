@@ -252,16 +252,19 @@ function App() {
     const prompt = `Ты — ${data.role}.
 
 Объект: ${obj}.
-Расположение: ${loc}, пересечение линий сетки 3×3, 25% площади.
-Ракурс: ${angleShort}, wide framing, воздушная перспектива.
-Композиция: ${compShort}, направляющие линии — ${lineSrc}, негативное пространство.
-Структура: ${data.linearStructure.toLowerCase()}, ${data.structure.toLowerCase()}, ${data.centerSize.toLowerCase()} центр, ${data.center.toLowerCase()}.
-Освещение: ${lightShort}, акцент на текстуру — ${tex}.
-Цвет: ${mainC} (фон, поверхность), ${accC} (акцент).
-Фон: ${data.background || '[фон]'}, bokeh, затенён, без читаемых деталей.
-Окружение: ${envType}, ${env}, без визуального шума.
+Расположение: ${loc}.
+Окружение: ${env}, ${envType}.
+Фон: ${data.background || '[фон]'}.
 Тон: ${toneShort}.
-Стиль: ${styleShort}, высокая детализация.
+Освещение: ${lightShort}.
+Композиция: ${compShort}.
+Направляющие линии: ${lineSrc}.
+Ракурс: ${angleShort}.
+Структура: ${data.linearStructure.toLowerCase()}.
+Фокус: ${data.structure.toLowerCase()}, ${data.center.toLowerCase()}, ${data.centerSize.toLowerCase()}.
+Цвет: ${mainC}, ${accC}.
+Текстура: ${tex}.
+Стиль: ${styleShort}.
 Формат: ${fmt}.
 
 Negative prompt: ${negativeStr}.`;
