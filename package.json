@@ -2,7 +2,7 @@
   "name": "sandbox-workspace",
   "private": true,
   "type": "module",
-  "homepage": "https://username.github.io/название-репо",
+  "homepage": "https://kutenko.github.io/propt-gen",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
