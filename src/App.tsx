@@ -24,6 +24,7 @@ interface PromptData {
   bottomClothing: string;
   bottomClothingColor: string;
   headwear: string;
+  headwearColor: string;
   emotion: string;
   pose: string;
   background: string;
@@ -619,6 +620,61 @@ const clothingColorDescriptions: Record<string, string> = {
   'Индиго': 'индиго',
 };
 
+// Цвета головного убора
+const headwearColorOptions = [
+  'Чёрный',
+  'Белый',
+  'Серый',
+  'Красный',
+  'Синий',
+  'Зелёный',
+  'Жёлтый',
+  'Оранжевый',
+  'Розовый',
+  'Фиолетовый',
+  'Коричневый',
+  'Бежевый',
+  'Голубой',
+  'Бордовый',
+  'Тёмно-синий',
+  'Оливковый',
+  'Хаки',
+  'Мятный',
+  'Лавандовый',
+  'Коралловый',
+  'Горчичный',
+  'Терракотовый',
+  'Изумрудный',
+  'Индиго',
+];
+
+const headwearColorDescriptions: Record<string, string> = {
+  'Чёрный': 'чёрного цвета',
+  'Белый': 'белого цвета',
+  'Серый': 'серого цвета',
+  'Красный': 'красного цвета',
+  'Синий': 'синего цвета',
+  'Зелёный': 'зелёного цвета',
+  'Жёлтый': 'жёлтого цвета',
+  'Оранжевый': 'оранжевого цвета',
+  'Розовый': 'розового цвета',
+  'Фиолетовый': 'фиолетового цвета',
+  'Коричневый': 'коричневого цвета',
+  'Бежевый': 'бежевого цвета',
+  'Голубой': 'голубого цвета',
+  'Бордовый': 'бордового цвета',
+  'Тёмно-синий': 'тёмно-синего цвета',
+  'Оливковый': 'оливкового цвета',
+  'Хаки': 'цвета хаки',
+  'Мятный': 'мятного цвета',
+  'Лавандовый': 'лавандового цвета',
+  'Коралловый': 'кораллового цвета',
+  'Горчичный': 'горчичного цвета',
+  'Терракотовый': 'терракотового цвета',
+  'Изумрудный': 'изумрудного цвета',
+  'Индиго': 'цвета индиго',
+};
+
 // Головные уборы
 const headwearOptions = [
   'Без головного убора',
@@ -1155,6 +1211,7 @@ export default function App() {
     bottomClothing: '',
     bottomClothingColor: '',
     headwear: '',
+    headwearColor: '',
     emotion: '',
     pose: '',
     background: '',
@@ -1308,7 +1365,11 @@ export default function App() {
         }
         
         if (data.headwear && data.headwear !== 'Без головного убора') {
-          intro += `, на голове ${headwearDescriptions[data.headwear] || data.headwear}`;
+          let headwearDesc = headwearDescriptions[data.headwear] || data.headwear;
+          if (data.headwearColor) {
+            headwearDesc += ' ' + (headwearColorDescriptions[data.headwearColor] || data.headwearColor);
+          }
+          intro += `, на голове ${headwearDesc}`;
         }
       }
       
@@ -1425,6 +1486,7 @@ export default function App() {
       bottomClothing: '',
       bottomClothingColor: '',
       headwear: '',
+      headwearColor: '',
       emotion: '',
       pose: '',
       background: '',
@@ -1753,45 +1815,48 @@ export default function App() {
                         </select>
                       </div>
                     </div>
-                    <div>
-                      <label className="block text-xs text-gray-400 mb-1">Головной убор</label>
-                      <select
-                        value={data.headwear}
-                        onChange={(e) => handleChange('headwear', e.target.value)}
-                        className="w-full px-3 py-2 bg-gray-800/50 border border-pink-500/30 rounded-lg text-white text-sm"
-                      >
-                        <option value="">Не выбрано</option>
-                        {headwearOptions.map(opt => (
-                          <option key={opt} value={opt}>{opt}</option>
-                        ))}
-                      </select>
-                    </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                       <div>
-                        <label className="block text-xs text-gray-400 mb-1">Эмоция</label>
+                        <label className="block text-xs text-gray-400 mb-1">Головной убор</label>
+                        <SelectWithCustom
+                          value={data.headwear}
+                          onChange={(v) => handleChange('headwear', v)}
+                          options={headwearOptions}
+                          placeholder="Выберите или введите свой вариант"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs text-gray-400 mb-1">Цвет головного убора</label>
                         <select
-                          value={data.emotion}
-                          onChange={(e) => handleChange('emotion', e.target.value)}
+                          value={data.headwearColor}
+                          onChange={(e) => handleChange('headwearColor', e.target.value)}
                           className="w-full px-3 py-2 bg-gray-800/50 border border-pink-500/30 rounded-lg text-white text-sm"
                         >
                           <option value="">Не выбрано</option>
-                          {emotionOptions.map(opt => (
+                          {headwearColorOptions.map(opt => (
                             <option key={opt} value={opt}>{opt}</option>
                           ))}
                         </select>
                       </div>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-xs text-gray-400 mb-1">Эмоция</label>
+                        <SelectWithCustom
+                          value={data.emotion}
+                          onChange={(v) => handleChange('emotion', v)}
+                          options={emotionOptions}
+                          placeholder="Выберите или введите свою эмоцию"
+                        />
+                      </div>
                       <div>
                         <label className="block text-xs text-gray-400 mb-1">Поза</label>
-                        <select
+                        <SelectWithCustom
                           value={data.pose}
-                          onChange={(e) => handleChange('pose', e.target.value)}
-                          className="w-full px-3 py-2 bg-gray-800/50 border border-pink-500/30 rounded-lg text-white text-sm"
-                        >
-                          <option value="">Не выбрано</option>
-                          {poseOptions.map(opt => (
-                            <option key={opt} value={opt}>{opt}</option>
-                          ))}
-                        </select>
+                          onChange={(v) => handleChange('pose', v)}
+                          options={poseOptions}
+                          placeholder="Выберите или введите свою позу"
+                        />
                       </div>
                     </div>
                   </>
