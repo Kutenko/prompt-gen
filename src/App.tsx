@@ -1300,9 +1300,10 @@ export default function App() {
         compParts.push(`съёмка ведётся ${data.angle.toLowerCase()} ракурс`);
       }
       
-      if (data.bodyPart) {
+      // Для портретных типов - используем bodyPart, для остальных - focus
+      if (isPortrait && data.bodyPart) {
         compParts.push(`в фокусе ${bodyPartDescriptions[data.bodyPart] || data.bodyPart}`);
-      } else if (data.focus) {
+      } else if (!isPortrait && data.focus) {
         compParts.push(focusDescriptions[data.focus] || data.focus);
       }
       
