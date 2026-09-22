@@ -14,8 +14,10 @@ interface PromptData {
   position: string;
   distance: string;
   object: string;
+  objectAction: string;
   age: string;
   hair: string;
+  hairColor: string;
   makeup: string;
   topClothing: string;
   topClothingColor: string;
@@ -895,6 +897,156 @@ const negativeItems = [
   'случайные люди в кадре',
 ];
 
+// Объекты
+const objectOptions = [
+  'Женщина',
+  'Мужчина',
+  'Ребёнок',
+  'Пара',
+  'Семья',
+  'Собака',
+  'Кошка',
+  'Лошадь',
+  'Птица',
+  'Автомобиль',
+  'Мотоцикл',
+  'Велосипед',
+  'Цветы',
+  'Дерево',
+  'Фрукты',
+  'Еда',
+  'Напиток',
+  'Книга',
+  'Часы',
+  'Украшения',
+  'Сумка',
+  'Обувь',
+  'Здание',
+  'Мост',
+];
+
+// Действия объекта
+const objectActionOptions = [
+  'держит цветок',
+  'держит книгу',
+  'держит чашку',
+  'держит сумку',
+  'смотрит в окно',
+  'идёт по улице',
+  'сидит на стуле',
+  'стоит у стены',
+  'опирается на перила',
+  'читает книгу',
+  'пьёт кофе',
+  'играет с собакой',
+  'гуляет',
+  'танцует',
+  'смеётся',
+  'мечтательно смотрит вдаль',
+  'поправляет волосы',
+  'смотрит в камеру',
+  'отвернулся',
+  'бежит',
+];
+
+// Цвета волос
+const hairColorOptions = [
+  'Чёрный',
+  'Тёмно-каштановый',
+  'Каштановый',
+  'Светло-каштановый',
+  'Русый',
+  'Светло-русый',
+  'Блонд',
+  'Платиновый блонд',
+  'Красный',
+  'Медный',
+  'Рыжий',
+  'Седой',
+  'Белый',
+  'Синий',
+  'Розовый',
+  'Фиолетовый',
+  'Зелёный',
+];
+
+const hairColorDescriptions: Record<string, string> = {
+  'Чёрный': 'чёрного цвета',
+  'Тёмно-каштановый': 'тёмно-каштанового цвета',
+  'Каштановый': 'каштанового цвета',
+  'Светло-каштановый': 'светло-каштанового цвета',
+  'Русый': 'русого цвета',
+  'Светло-русый': 'светло-русого цвета',
+  'Блонд': 'светло-золотистого цвета',
+  'Платиновый блонд': 'платинового цвета',
+  'Красный': 'красного цвета',
+  'Медный': 'медного цвета',
+  'Рыжий': 'рыжего цвета',
+  'Седой': 'седого цвета',
+  'Белый': 'белого цвета',
+  'Синий': 'синего цвета',
+  'Розовый': 'розового цвета',
+  'Фиолетовый': 'фиолетового цвета',
+  'Зелёный': 'зелёного цвета',
+};
+
+// Компонент SelectWithCustom - выпадающий список с возможностью ввода своего варианта
+function SelectWithCustom({ 
+  value, 
+  onChange, 
+  options, 
+  placeholder 
+}: { 
+  value: string; 
+  onChange: (value: string) => void; 
+  options: string[];
+  placeholder?: string;
+}) {
+  const [isCustom, setIsCustom] = useState(false);
+  const [customValue, setCustomValue] = useState('');
+
+  const handleSelectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const selectedValue = e.target.value;
+    if (selectedValue === '__custom__') {
+      setIsCustom(true);
+      setCustomValue('');
+    } else {
+      setIsCustom(false);
+      onChange(selectedValue);
+    }
+  };
+
+  const handleCustomChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setCustomValue(e.target.value);
+    onChange(e.target.value);
+  };
+
+  return (
+    <div className="space-y-2">
+      <select
+        value={isCustom ? '__custom__' : value}
+        onChange={handleSelectChange}
+        className="w-full px-3 py-2 bg-gray-800/50 border border-pink-500/30 rounded-lg text-white text-sm"
+      >
+        <option value="">Не выбрано</option>
+        {options.map(opt => (
+          <option key={opt} value={opt}>{opt}</option>
+        ))}
+        <option value="__custom__">✏️ Свой вариант...</option>
+      </select>
+      {isCustom && (
+        <input
+          type="text"
+          value={customValue}
+          onChange={handleCustomChange}
+          placeholder={placeholder || 'Введите свой вариант'}
+          className="w-full px-3 py-2 bg-gray-800/50 border border-pink-500/30 rounded-lg text-white text-sm"
+        />
+      )}
+    </div>
+  );
+}
+
 export default function App() {
   const [data, setData] = useState<PromptData>({
     photoType: 'Fashion-фотография',
@@ -909,8 +1061,10 @@ export default function App() {
     position: '',
     distance: '',
     object: '',
+    objectAction: '',
     age: '',
     hair: '',
+    hairColor: '',
     makeup: '',
     topClothing: '',
     topClothingColor: '',
@@ -1011,10 +1165,21 @@ export default function App() {
       
       intro += data.object;
       
+      // Действие объекта
+      if (data.objectAction) {
+        intro += ', ' + data.objectAction;
+      }
+      
       if (isPortrait) {
         const details: string[] = [];
         if (data.age) details.push(ageDescriptions[data.age] || data.age);
-        if (data.hair) details.push(hairDescriptions[data.hair] || data.hair);
+        if (data.hair) {
+          let hairDesc = hairDescriptions[data.hair] || data.hair;
+          if (data.hairColor) {
+            hairDesc += ' ' + (hairColorDescriptions[data.hairColor] || data.hairColor);
+          }
+          details.push(hairDesc);
+        }
         if (data.makeup) details.push(makeupDescriptions[data.makeup] || data.makeup);
         
         if (details.length) {
@@ -1107,7 +1272,23 @@ export default function App() {
 
   const copyToClipboard = async () => {
     try {
-      await navigator.clipboard.writeText(generatedPrompt);
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(generatedPrompt);
+      } else {
+        // Fallback для старых браузеров
+        const textArea = document.createElement('textarea');
+        textArea.value = generatedPrompt;
+        textArea.style.position = 'fixed';
+        textArea.style.left = '-999999px';
+        document.body.appendChild(textArea);
+        textArea.select();
+        try {
+          document.execCommand('copy');
+        } catch (err) {
+          console.error('Fallback копирование не сработало:', err);
+        }
+        document.body.removeChild(textArea);
+      }
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
@@ -1129,8 +1310,10 @@ export default function App() {
       position: '',
       distance: '',
       object: '',
+      objectAction: '',
       age: '',
       hair: '',
+      hairColor: '',
       makeup: '',
       topClothing: '',
       topClothingColor: '',
@@ -1327,15 +1510,25 @@ export default function App() {
             <div className="bg-black/30 backdrop-blur-sm rounded-2xl border border-pink-500/20 p-5">
               <h2 className="text-lg font-semibold text-pink-300 mb-4">🎯 Объект</h2>
               <div className="space-y-3">
-                <div>
-                  <label className="block text-xs text-gray-400 mb-1">Объект</label>
-                  <input
-                    type="text"
-                    value={data.object}
-                    onChange={(e) => handleChange('object', e.target.value)}
-                    placeholder="Например: Женщина"
-                    className="w-full px-3 py-2 bg-gray-800/50 border border-pink-500/30 rounded-lg text-white text-sm"
-                  />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs text-gray-400 mb-1">Объект</label>
+                    <SelectWithCustom
+                      value={data.object}
+                      onChange={(v) => handleChange('object', v)}
+                      options={objectOptions}
+                      placeholder="Выберите или введите свой вариант"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-400 mb-1">Действие объекта</label>
+                    <SelectWithCustom
+                      value={data.objectAction}
+                      onChange={(v) => handleChange('objectAction', v)}
+                      options={objectActionOptions}
+                      placeholder="Выберите или введите своё действие"
+                    />
+                  </div>
                 </div>
                 {isPortraitType && (
                   <>
@@ -1352,7 +1545,7 @@ export default function App() {
                         ))}
                       </select>
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                       <div>
                         <label className="block text-xs text-gray-400 mb-1">Причёска</label>
                         <select
@@ -1362,6 +1555,19 @@ export default function App() {
                         >
                           <option value="">Не выбрано</option>
                           {hairOptions.map(opt => (
+                            <option key={opt} value={opt}>{opt}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-xs text-gray-400 mb-1">Цвет волос</label>
+                        <select
+                          value={data.hairColor}
+                          onChange={(e) => handleChange('hairColor', e.target.value)}
+                          className="w-full px-3 py-2 bg-gray-800/50 border border-pink-500/30 rounded-lg text-white text-sm"
+                        >
+                          <option value="">Не выбрано</option>
+                          {hairColorOptions.map(opt => (
                             <option key={opt} value={opt}>{opt}</option>
                           ))}
                         </select>
@@ -1494,43 +1700,31 @@ export default function App() {
               <div className="space-y-3">
                 <div>
                   <label className="block text-xs text-gray-400 mb-1">Фон</label>
-                  <select
+                  <SelectWithCustom
                     value={data.background}
-                    onChange={(e) => handleChange('background', e.target.value)}
-                    className="w-full px-3 py-2 bg-gray-800/50 border border-green-500/30 rounded-lg text-white text-sm"
-                  >
-                    <option value="">Не выбрано</option>
-                    {backgroundOptions.map(opt => (
-                      <option key={opt} value={opt}>{opt}</option>
-                    ))}
-                  </select>
+                    onChange={(v) => handleChange('background', v)}
+                    options={backgroundOptions}
+                    placeholder="Введите свой вариант фона"
+                  />
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div>
                     <label className="block text-xs text-gray-400 mb-1">Окружение</label>
-                    <select
+                    <SelectWithCustom
                       value={data.environment}
-                      onChange={(e) => handleChange('environment', e.target.value)}
-                      className="w-full px-3 py-2 bg-gray-800/50 border border-green-500/30 rounded-lg text-white text-sm"
-                    >
-                      <option value="">Не выбрано</option>
-                      {environmentOptions.map(opt => (
-                        <option key={opt} value={opt}>{opt}</option>
-                      ))}
-                    </select>
+                      onChange={(v) => handleChange('environment', v)}
+                      options={environmentOptions}
+                      placeholder="Введите свой вариант окружения"
+                    />
                   </div>
                   <div>
                     <label className="block text-xs text-gray-400 mb-1">Локация</label>
-                    <select
+                    <SelectWithCustom
                       value={data.location}
-                      onChange={(e) => handleChange('location', e.target.value)}
-                      className="w-full px-3 py-2 bg-gray-800/50 border border-green-500/30 rounded-lg text-white text-sm"
-                    >
-                      <option value="">Не выбрано</option>
-                      {locationOptions.map(opt => (
-                        <option key={opt} value={opt}>{opt}</option>
-                      ))}
-                    </select>
+                      onChange={(v) => handleChange('location', v)}
+                      options={locationOptions}
+                      placeholder="Введите свой вариант локации"
+                    />
                   </div>
                 </div>
               </div>
