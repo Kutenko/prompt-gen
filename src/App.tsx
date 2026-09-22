@@ -897,36 +897,44 @@ const negativeItems = [
   'случайные люди в кадре',
 ];
 
-// Объекты
-const objectOptions = [
-  'Женщина',
-  'Мужчина',
-  'Ребёнок',
-  'Пара',
-  'Семья',
-  'Собака',
-  'Кошка',
-  'Лошадь',
-  'Птица',
-  'Автомобиль',
-  'Мотоцикл',
-  'Велосипед',
-  'Цветы',
-  'Дерево',
-  'Фрукты',
-  'Еда',
-  'Напиток',
-  'Книга',
-  'Часы',
-  'Украшения',
-  'Сумка',
-  'Обувь',
-  'Здание',
-  'Мост',
+// Категории объектов
+const peopleObjects = ['Женщина', 'Мужчина', 'Ребёнок', 'Пара', 'Семья'];
+const animalObjects = ['Собака', 'Кошка', 'Лошадь', 'Птица', 'Рыба', 'Лев', 'Тигр'];
+const transportObjects = ['Автомобиль', 'Мотоцикл', 'Велосипед', 'Лодка', 'Самолёт'];
+const plantObjects = ['Цветы', 'Дерево', 'Растение', 'Роза', 'Орхидея', 'Кактус'];
+const foodObjects = ['Фрукты', 'Овощи', 'Ягоды', 'Еда', 'Напиток', 'Десерт', 'Торт', 'Пицца', 'Кофе', 'Чай', 'Вино'];
+const itemObjects = ['Книга', 'Часы', 'Украшения', 'Сумка', 'Обувь', 'Очки', 'Камера', 'Ноутбук', 'Телефон'];
+const architectureObjects = ['Здание', 'Мост', 'Замок', 'Башня', 'Фонтан', 'Памятник'];
+
+// Все объекты
+const allObjects = [
+  ...peopleObjects,
+  ...animalObjects,
+  ...transportObjects,
+  ...plantObjects,
+  ...foodObjects,
+  ...itemObjects,
+  ...architectureObjects,
 ];
 
-// Действия объекта
-const objectActionOptions = [
+// Фильтрация объектов по типу съёмки
+const getAvailableObjects = (photoType: string): string[] => {
+  switch (photoType) {
+    case 'Предметная съёмка':
+    case 'Натюрморт':
+      return [...plantObjects, ...foodObjects, ...itemObjects, ...architectureObjects];
+    case 'Пейзаж':
+    case 'Архитектурная съёмка':
+      return [...plantObjects, ...architectureObjects, ...transportObjects];
+    case 'Спортивная съёмка':
+      return [...peopleObjects, ...transportObjects];
+    default:
+      return allObjects;
+  }
+};
+
+// Действия для людей
+const peopleActions = [
   'держит цветок',
   'держит книгу',
   'держит чашку',
@@ -948,6 +956,82 @@ const objectActionOptions = [
   'отвернулся',
   'бежит',
 ];
+
+// Действия для животных
+const animalActions = [
+  'бежит',
+  'сидит',
+  'стоит',
+  'лежит',
+  'играет',
+  'смотрит в камеру',
+  'ест',
+  'спит',
+  'плывёт',
+  'летит',
+];
+
+// Действия для транспорта
+const transportActions = [
+  'едет по дороге',
+  'стоит на парковке',
+  'мчится на скорости',
+  'припаркован',
+  'плывёт по воде',
+  'летит в небе',
+];
+
+// Действия для растений
+const plantActions = [
+  'цветёт',
+  'шелестит на ветру',
+  'растёт',
+  'покрыт росой',
+  'клонится под ветром',
+  'распускает бутоны',
+];
+
+// Действия для еды/напитков
+const foodActions = [
+  'парит',
+  'тает',
+  'украшено фруктами',
+  'подаётся на тарелке',
+  'наливается в бокал',
+  'дымится',
+];
+
+// Действия для предметов
+const itemActions = [
+  'лежит на поверхности',
+  'отражает свет',
+  'открыта',
+  'закрыта',
+  'светится',
+  'блестит',
+];
+
+// Действия для архитектуры
+const architectureActions = [
+  'возвышается',
+  'освещён закатным солнцем',
+  'отражается в воде',
+  'покрыт снегом',
+  'украшен виноградом',
+  'стоит в тумане',
+];
+
+// Фильтрация действий по категории объекта
+const getAvailableActions = (object: string): string[] => {
+  if (peopleObjects.includes(object)) return peopleActions;
+  if (animalObjects.includes(object)) return animalActions;
+  if (transportObjects.includes(object)) return transportActions;
+  if (plantObjects.includes(object)) return plantActions;
+  if (foodObjects.includes(object)) return foodActions;
+  if (itemObjects.includes(object)) return itemActions;
+  if (architectureObjects.includes(object)) return architectureActions;
+  return [];
+};
 
 // Цвета волос
 const hairColorOptions = [
@@ -1089,7 +1173,28 @@ export default function App() {
   const [copied, setCopied] = useState(false);
 
   const handleChange = (field: keyof PromptData, value: string) => {
-    setData(prev => ({ ...prev, [field]: value }));
+    setData(prev => {
+      const newData = { ...prev, [field]: value };
+      
+      // При смене типа фотографии проверяем совместимость объекта
+      if (field === 'photoType') {
+        const availableObjects = getAvailableObjects(value);
+        if (prev.object && !availableObjects.includes(prev.object)) {
+          newData.object = '';
+          newData.objectAction = '';
+        }
+      }
+      
+      // При смене объекта проверяем совместимость действия
+      if (field === 'object') {
+        const availableActions = getAvailableActions(value);
+        if (prev.objectAction && !availableActions.includes(prev.objectAction)) {
+          newData.objectAction = '';
+        }
+      }
+      
+      return newData;
+    });
   };
 
   const toggleNegative = (item: string) => {
@@ -1516,7 +1621,7 @@ export default function App() {
                     <SelectWithCustom
                       value={data.object}
                       onChange={(v) => handleChange('object', v)}
-                      options={objectOptions}
+                      options={getAvailableObjects(data.photoType)}
                       placeholder="Выберите или введите свой вариант"
                     />
                   </div>
@@ -1525,7 +1630,7 @@ export default function App() {
                     <SelectWithCustom
                       value={data.objectAction}
                       onChange={(v) => handleChange('objectAction', v)}
-                      options={objectActionOptions}
+                      options={getAvailableActions(data.object)}
                       placeholder="Выберите или введите своё действие"
                     />
                   </div>
