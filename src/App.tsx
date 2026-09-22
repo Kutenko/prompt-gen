@@ -1504,6 +1504,72 @@ export default function App() {
     setGeneratedPrompt('');
   };
 
+  const generateRandomPrompt = () => {
+    // Вспомогательная функция для случайного выбора из массива
+    const randomChoice = <T,>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)];
+    
+    // Вспомогательная функция для случайного выбора с вероятностью пустого значения
+    const randomChoiceWithEmpty = <T,>(arr: T[], emptyProbability: number = 0.3): T | '' => {
+      return Math.random() < emptyProbability ? '' : randomChoice(arr);
+    };
+
+    // 1. Случайный тип фотографии
+    const randomPhotoType = randomChoice(photoTypeOptions);
+    
+    // 2. Получаем доступные объекты для этого типа
+    const availableObjects = getAvailableObjects(randomPhotoType);
+    const randomObject = randomChoice(availableObjects);
+    
+    // 3. Получаем доступные действия для этого объекта
+    const availableActions = getAvailableActions(randomObject);
+    const randomAction = randomChoiceWithEmpty(availableActions, 0.4);
+    
+    // 4. Определяем, портретный ли это тип
+    const portraitTypes = ['Портрет', 'Fashion-фотография', 'Стрит-фото', 'Свадебная фотография'];
+    const isPortrait = portraitTypes.includes(randomPhotoType);
+    
+    // 5. Генерируем случайные значения для всех полей
+    const randomData: PromptData = {
+      photoType: randomPhotoType,
+      magazine: randomChoiceWithEmpty(magazineOptions, 0.5),
+      style: randomChoiceWithEmpty(styleOptions, 0.6),
+      artStyle: randomChoiceWithEmpty(artStyleOptions, 0.7),
+      filter: randomChoiceWithEmpty(filterOptions.filter(f => f !== 'Без фильтра'), 0.6),
+      format: randomChoice(formatOptions),
+      angle: randomChoice(angleOptions),
+      bodyPart: isPortrait ? randomChoiceWithEmpty(bodyPartOptions, 0.3) : '',
+      focus: !isPortrait ? randomChoiceWithEmpty(focusOptions, 0.3) : '',
+      position: randomChoiceWithEmpty(positionOptions, 0.4),
+      distance: randomChoiceWithEmpty(distanceOptions, 0.4),
+      object: randomObject,
+      objectAction: randomAction,
+      age: isPortrait ? randomChoiceWithEmpty(ageOptions, 0.3) : '',
+      hair: isPortrait ? randomChoiceWithEmpty(hairOptions, 0.3) : '',
+      hairColor: isPortrait && Math.random() > 0.3 ? randomChoice(hairColorOptions) : '',
+      makeup: isPortrait ? randomChoiceWithEmpty(makeupOptions, 0.4) : '',
+      topClothing: isPortrait ? randomChoiceWithEmpty(topClothingOptions, 0.3) : '',
+      topClothingColor: isPortrait && Math.random() > 0.3 ? randomChoice(clothingColorOptions) : '',
+      bottomClothing: isPortrait ? randomChoiceWithEmpty(bottomClothingOptions, 0.3) : '',
+      bottomClothingColor: isPortrait && Math.random() > 0.3 ? randomChoice(clothingColorOptions) : '',
+      headwear: isPortrait ? randomChoiceWithEmpty(headwearOptions.filter(h => h !== 'Без головного убора'), 0.6) : '',
+      headwearColor: isPortrait && Math.random() > 0.5 ? randomChoice(headwearColorOptions) : '',
+      emotion: isPortrait ? randomChoiceWithEmpty(emotionOptions, 0.3) : '',
+      pose: isPortrait ? randomChoiceWithEmpty(poseOptions, 0.3) : '',
+      background: randomChoiceWithEmpty(backgroundOptions, 0.4),
+      environment: randomChoiceWithEmpty(environmentOptions, 0.5),
+      location: randomChoiceWithEmpty(locationOptions, 0.6),
+      tone: randomChoiceWithEmpty(toneOptions, 0.3),
+      lighting: randomChoiceWithEmpty(lightingOptions, 0.3),
+      mainColor: randomChoiceWithEmpty([], 1), // Пустое с вероятностью 100%
+      accentColor: randomChoiceWithEmpty([], 1), // Пустое с вероятностью 100%
+      textureElement: randomChoiceWithEmpty([], 1), // Пустое с вероятностью 100%
+      negatives: [...negativeItems],
+      customNegative: '',
+    };
+    
+    setData(randomData);
+  };
+
   const portraitTypes = ['Портрет', 'Fashion-фотография', 'Стрит-фото', 'Свадебная фотография'];
   const isPortraitType = portraitTypes.includes(data.photoType);
 
@@ -2005,6 +2071,12 @@ export default function App() {
                 className="flex-1 px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-semibold rounded-xl shadow-lg shadow-purple-500/20 transition-all"
               >
                 ✨ Генерировать промпт
+              </button>
+              <button
+                onClick={generateRandomPrompt}
+                className="px-6 py-3 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 text-white font-semibold rounded-xl shadow-lg shadow-blue-500/20 transition-all"
+              >
+                🎲 Случайный
               </button>
               <button
                 onClick={resetForm}
