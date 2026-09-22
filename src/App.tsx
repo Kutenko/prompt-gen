@@ -1,5 +1,1621 @@
+import { useState, useCallback } from 'react';
+
+// Типы данных
+interface PromptData {
+  photoType: string;
+  style: string;
+  artStyle: string;
+  filter: string;
+  format: string;
+  angle: string;
+  bodyPart: string;
+  focus: string;
+  position: string;
+  distance: string;
+  object: string;
+  age: string;
+  hair: string;
+  makeup: string;
+  topClothing: string;
+  topClothingColor: string;
+  bottomClothing: string;
+  bottomClothingColor: string;
+  headwear: string;
+  emotion: string;
+  pose: string;
+  background: string;
+  environment: string;
+  location: string;
+  tone: string;
+  lighting: string;
+  mainColor: string;
+  accentColor: string;
+  textureElement: string;
+  negatives: string[];
+  customNegative: string;
+}
+
+// Опции типов фотографии
+const photoTypeOptions = [
+  'Fashion-фотография',
+  'Портрет',
+  'Стрит-фото',
+  'Свадебная фотография',
+  'Предметная съёмка',
+  'Пейзаж',
+  'Архитектурная съёмка',
+  'Натюрморт',
+  'Спортивная съёмка',
+  'Рекламная съёмка',
+];
+
+const photoTypeDescriptions: Record<string, string> = {
+  'Fashion-фотография': 'Fashion-фотография — глянцевый стиль, подиумная эстетика, акцент на одежде и позе',
+  'Портрет': 'психологический портрет',
+  'Стрит-фото': 'street-фотография',
+  'Свадебная фотография': 'свадебная фотография',
+  'Предметная съёмка': 'предметная съёмка с детализацией фактур',
+  'Пейзаж': 'пейзаж с природным светом',
+  'Архитектурная съёмка': 'архитектурная съёмка',
+  'Натюрморт': 'натюрморт',
+  'Спортивная съёмка': 'спортивная съёмка',
+  'Рекламная съёмка': 'рекламная съёмка',
+};
+
+// Стили
+const styleOptions = [
+  'Журнальный',
+  'Кинематографический',
+  'Документальный',
+  'Портретный',
+  'Fashion',
+  'Street',
+  'Fine Art',
+  'Концептуальный',
+  'Ретро',
+  'Футуристический',
+  'Минималистичный',
+  'Барокко',
+  'Поп-арт',
+  'Нуар',
+];
+
+// Художественные стили
+const artStyleOptions = [
+  'Русские сказки',
+  'Барокко',
+  'Минимализм',
+  'Аниме',
+  'Реализм',
+  'Импрессионизм',
+  'Сюрреализм',
+  'Поп-арт',
+  'Ар-нуво',
+  'Готика',
+  'Ренессанс',
+  'Модерн',
+  'Кубизм',
+  'Экспрессионизм',
+  'Фовизм',
+  'Романтизм',
+  'Классицизм',
+  'Викторианский стиль',
+  'Византийский стиль',
+  'Японская гравюра',
+];
+
+const artStyleDescriptions: Record<string, string> = {
+  'Русские сказки': 'стиль русских народных сказок с узорами и традиционными мотивами',
+  'Барокко': 'барокко с пышными деталями и золотыми акцентами',
+  'Минимализм': 'минимализм с лаконичными формами и пустым пространством',
+  'Аниме': 'стиль аниме с выразительными глазами и яркими цветами',
+  'Реализм': 'фотореализм с детализацией и естественными цветами',
+  'Импрессионизм': 'импрессионизм с мягкими мазками и игрой света',
+  'Сюрреализм': 'сюрреализм с ирреальными образами и сновидческой атмосферой',
+  'Поп-арт': 'поп-арт с контрастными цветами и графичностью',
+  'Ар-нуво': 'ар-нуво с плавными линиями и природными мотивами',
+  'Готика': 'готика с тёмной палитрой и драматичным освещением',
+  'Ренессанс': 'ренессанс с гармоничными пропорциями и мягким светом',
+  'Модерн': 'модерн с чистыми линиями и геометрическими формами',
+  'Кубизм': 'кубизм с геометрическими формами и множественными перспективами',
+  'Экспрессионизм': 'экспрессионизм с искажёнными формами и интенсивными цветами',
+  'Фовизм': 'фовизм с яркими цветами и упрощёнными формами',
+  'Романтизм': 'романтизм с драматичными пейзажами и эмоциональной глубиной',
+  'Классицизм': 'классицизм с идеальными пропорциями и симметрией',
+  'Викторианский стиль': 'викторианский стиль с пышными деталями и орнаментами',
+  'Византийский стиль': 'византийский стиль с золотыми фонами',
+  'Японская гравюра': 'стиль японской гравюры укиё-э с плоскостностью и выразительными линиями',
+};
+
+// Фильтры
+const filterOptions = [
+  'Чёрно-белый',
+  'Сепия',
+  'Тёплые тона',
+  'Холодные тона',
+  'Высокий контраст',
+  'Низкий контраст',
+  'Матовый',
+  'Глянцевый',
+  'Винтаж',
+  'Кросс-процесс',
+  'HDR',
+  'Мягкий фокус',
+  'Зернистость',
+  'Без фильтра',
+];
+
+const filterDescriptions: Record<string, string> = {
+  'Чёрно-белый': 'чёрно-белое изображение',
+  'Сепия': 'сепия с коричнево-золотистыми тонами',
+  'Тёплые тона': 'тёплые тона',
+  'Холодные тона': 'холодные тона',
+  'Высокий контраст': 'высокий контраст',
+  'Низкий контраст': 'низкий контраст',
+  'Матовый': 'матовая обработка',
+  'Глянцевый': 'глянцевая обработка',
+  'Винтаж': 'винтажный фильтр',
+  'Кросс-процесс': 'кросс-процесс',
+  'HDR': 'HDR-обработка',
+  'Мягкий фокус': 'мягкий фокус',
+  'Зернистость': 'плёночная зернистость',
+  'Без фильтра': 'без фильтра',
+};
+
+// Форматы
+const formatOptions = ['4:3', '16:9', '1:1', '3:2', '2:3', '9:16', '21:9'];
+
+// Ракурсы
+const angleOptions = [
+  'Фронтальный',
+  'Сверху (bird eye)',
+  'Снизу (worm eye)',
+  '3/4 спереди',
+  '3/4 сзади',
+  'Профиль',
+  'Сзади',
+  'Голландский угол',
+  'По диагонали сверху',
+  'На уровне глаз',
+  'Сверхвысокий',
+  'Сверхнизкий',
+];
+
+// Дальность
+const distanceOptions = [
+  'Экстремально близко',
+  'Очень близко',
+  'Близко',
+  'Средне-близко',
+  'Средне',
+  'Средне-далеко',
+  'Далеко',
+  'Очень далеко',
+  'Экстремально далеко',
+];
+
+const distanceDescriptions: Record<string, string> = {
+  'Экстремально близко': 'экстремально близко',
+  'Очень близко': 'очень близко',
+  'Близко': 'близко',
+  'Средне-близко': 'средне-близко',
+  'Средне': 'средне',
+  'Средне-далеко': 'средне-далеко',
+  'Далеко': 'далеко',
+  'Очень далеко': 'очень далеко',
+  'Экстремально далеко': 'экстремально далеко',
+};
+
+// Части тела
+const bodyPartOptions = [
+  'Всё лицо',
+  'Глаза',
+  'Губы',
+  'Нос',
+  'Лоб',
+  'Щёки',
+  'Подбородок',
+  'Шея и ключицы',
+  'Плечи',
+  'Руки и кисти',
+  'Ноги',
+  'Стопы',
+  'Спина',
+  'Грудь',
+  'Талия',
+  'Бёдра',
+  'Волосы',
+  'Голова и плечи',
+  'Фигура до пояса',
+  'Фигура целиком',
+  'Морда',
+  'Лапы',
+  'Хвост',
+  'Шерсть',
+  'Крылья',
+  'Клюв',
+];
+
+const bodyPartDescriptions: Record<string, string> = {
+  'Всё лицо': 'всё лицо',
+  'Глаза': 'глаза',
+  'Губы': 'губы',
+  'Нос': 'нос',
+  'Лоб': 'лоб',
+  'Щёки': 'щёки',
+  'Подбородок': 'подбородок',
+  'Шея и ключицы': 'шея и линия ключиц',
+  'Плечи': 'плечи',
+  'Руки и кисти': 'руки и кисти',
+  'Ноги': 'ноги',
+  'Стопы': 'стопы',
+  'Спина': 'спина',
+  'Грудь': 'грудь',
+  'Талия': 'талия',
+  'Бёдра': 'бёдра',
+  'Волосы': 'волосы',
+  'Голова и плечи': 'голова и плечи',
+  'Фигура до пояса': 'фигура до пояса',
+  'Фигура целиком': 'фигура целиком',
+  'Морда': 'морда',
+  'Лапы': 'лапы',
+  'Хвост': 'хвост',
+  'Шерсть': 'шерсть',
+  'Крылья': 'крылья',
+  'Клюв': 'клюв',
+};
+
+// Фокусы
+const focusOptions = [
+  'Деталь объекта',
+  'Центральный элемент',
+  'Передний план',
+  'Средний план',
+  'Задний план',
+  'Панорама',
+  'Силуэт',
+  'Текстура поверхности',
+  'Контур и форма',
+  'Отражение',
+];
+
+const focusDescriptions: Record<string, string> = {
+  'Деталь объекта': 'макросъёмка детали, видна текстура и мельчайшие элементы',
+  'Центральный элемент': 'акцент на главном элементе, он чёткий и выделенный, остальное размыто',
+  'Передний план': 'резкий передний план, задний план мягко размыт',
+  'Средний план': 'резкий средний план, передний и задний размыты',
+  'Задний план': 'резкий задний план, передний план размыт как вуаль',
+  'Панорама': 'широкий охват, всё в кадре равномерно резко, панорамный вид',
+  'Силуэт': 'объект виден как тёмный силуэт на ярком фоне, без деталей',
+  'Текстура поверхности': 'макросъёмка текстуры поверхности, видны мельчайшие неровности и узоры',
+  'Контур и форма': 'акцент на контуре и форме объекта, мягкий свет подчёркивает силуэт',
+  'Отражение': 'объект и его отражение в воде или зеркальной поверхности',
+};
+
+// Позиции
+const positionOptions = [
+  'По центру',
+  'Слева',
+  'Справа',
+  'Вверху',
+  'Внизу',
+  'В левом верхнем углу',
+  'В правом верхнем углу',
+  'В левом нижнем углу',
+  'В правом нижнем углу',
+  'Слегка слева от центра',
+  'Слегка справа от центра',
+];
+
+const positionDescriptions: Record<string, string> = {
+  'По центру': 'в центре кадра',
+  'Слева': 'в левой части кадра',
+  'Справа': 'в правой части кадра',
+  'Вверху': 'в верхней части кадра',
+  'Внизу': 'в нижней части кадра',
+  'В левом верхнем углу': 'в левом верхнем углу',
+  'В правом верхнем углу': 'в правом верхнем углу',
+  'В левом нижнем углу': 'в левом нижнем углу',
+  'В правом нижнем углу': 'в правом нижнем углу',
+  'Слегка слева от центра': 'слегка слева от центра',
+  'Слегка справа от центра': 'слегка справа от центра',
+};
+
+// Возраст
+const ageOptions = [
+  'Малыш (0-3 года)',
+  'Ребёнок (4-12 лет)',
+  'Подросток (13-17 лет)',
+  'Молодого возраста (18-30 лет)',
+  'Взрослого возраста (31-50 лет)',
+  'Пожилого возраста (51-70 лет)',
+  'Старческого возраста (70+ лет)',
+];
+
+const ageDescriptions: Record<string, string> = {
+  'Малыш (0-3 года)': 'малыш с пухлыми щёчками и нежными чертами',
+  'Ребёнок (4-12 лет)': 'ребёнок с живыми глазами и непосредственным выражением',
+  'Подросток (13-17 лет)': 'подросток с переходными чертами и юношеской энергией',
+  'Молодого возраста (18-30 лет)': 'человек молодого возраста с упругой кожей и свежим видом',
+  'Взрослого возраста (31-50 лет)': 'человек взрослого возраста с зрелыми чертами и уверенным взглядом',
+  'Пожилого возраста (51-70 лет)': 'человек пожилого возраста с морщинами опыта и мудрым взглядом',
+  'Старческого возраста (70+ лет)': 'человек старческого возраста с глубокими морщинами и взглядом, полным жизненной мудрости',
+};
+
+// Причёски
+const hairOptions = [
+  'Длинные прямые',
+  'Длинные волнистые',
+  'Длинные кудрявые',
+  'Средние прямые',
+  'Средние волнистые',
+  'Средние кудрявые',
+  'Короткая стрижка',
+  'Пикси',
+  'Каре',
+  'Боб',
+  'Пучок',
+  'Хвост',
+  'Коса',
+  'Две косы',
+  'Распущенные с объёмом',
+  'Мокрый эффект',
+  'Гладко зачёсанные назад',
+  'Пышные локоны',
+  'Афро',
+  'Бритая голова',
+];
+
+const hairDescriptions: Record<string, string> = {
+  'Длинные прямые': 'длинные прямые волосы',
+  'Длинные волнистые': 'длинные волнистые волосы',
+  'Длинные кудрявые': 'длинные кудрявые волосы с локонами',
+  'Средние прямые': 'прямые волосы до плеч',
+  'Средние волнистые': 'волнистые волосы средней длины',
+  'Средние кудрявые': 'кудрявые волосы средней длины',
+  'Короткая стрижка': 'короткая стрижка',
+  'Пикси': 'стрижка пикси',
+  'Каре': 'каре',
+  'Боб': 'стрижка боб',
+  'Пучок': 'волосы собраны в пучок',
+  'Хвост': 'волосы собраны в хвост',
+  'Коса': 'волосы заплетены в косу',
+  'Две косы': 'две косы',
+  'Распущенные с объёмом': 'объёмные распущенные волосы',
+  'Мокрый эффект': 'волосы с эффектом мокрых',
+  'Гладко зачёсанные назад': 'гладко зачёсанные назад волосы',
+  'Пышные локоны': 'пышные локоны',
+  'Афро': 'афро-локоны',
+  'Бритая голова': 'бритая голова',
+};
+
+// Макияж
+const makeupOptions = [
+  'Без макияжа',
+  'Естественный',
+  'Смоки айс',
+  'Красная помада',
+  'Nude',
+  'Яркие тени',
+  'Стрелки',
+  'Блестящий',
+  'Матовый',
+  'Готический',
+  'Авангардный',
+  'Бронзовый',
+  'Розовый',
+  'Дымчатый',
+  'Сияющий',
+];
+
+const makeupDescriptions: Record<string, string> = {
+  'Без макияжа': 'без макияжа',
+  'Естественный': 'лёгкий естественный макияж',
+  'Смоки айс': 'макияж смоки айс с тёмными тенями',
+  'Красная помада': 'красная помада',
+  'Nude': 'макияж в nude-тонах',
+  'Яркие тени': 'яркие цветные тени',
+  'Стрелки': 'стрелки на глазах',
+  'Блестящий': 'макияж с блёстками',
+  'Матовый': 'матовый макияж',
+  'Готический': 'тёмный готический макияж',
+  'Авангардный': 'авангардный креативный макияж',
+  'Бронзовый': 'бронзовый макияж с золотистыми оттенками',
+  'Розовый': 'розовый макияж',
+  'Дымчатый': 'дымчатый макияж',
+  'Сияющий': 'сияющий макияж с хайлайтером',
+};
+
+// Одежда верх
+const topClothingOptions = [
+  'Кожаная куртка',
+  'Джинсовая куртка',
+  'Блейзер',
+  'Пиджак',
+  'Свитер',
+  'Худи',
+  'Футболка',
+  'Рубашка',
+  'Блузка',
+  'Топ',
+  'Корсет',
+  'Платье',
+  'Комбинезон',
+  'Пальто',
+  'Тренч',
+  'Шуба',
+  'Бомбер',
+  'Косуха',
+  'Жилет',
+  'Кроп-топ',
+];
+
+const topClothingDescriptions: Record<string, string> = {
+  'Кожаная куртка': 'кожаная куртка',
+  'Джинсовая куртка': 'джинсовая куртка',
+  'Блейзер': 'блейзер',
+  'Пиджак': 'пиджак',
+  'Свитер': 'свитер',
+  'Худи': 'худи с капюшоном',
+  'Футболка': 'футболка',
+  'Рубашка': 'рубашка',
+  'Блузка': 'блузка',
+  'Топ': 'топ',
+  'Корсет': 'корсет',
+  'Платье': 'платье',
+  'Комбинезон': 'комбинезон',
+  'Пальто': 'пальто',
+  'Тренч': 'тренч',
+  'Шуба': 'шуба',
+  'Бомбер': 'бомбер',
+  'Косуха': 'косуха',
+  'Жилет': 'жилет',
+  'Кроп-топ': 'кроп-топ',
+};
+
+// Одежда низ
+const bottomClothingOptions = [
+  'Джинсы',
+  'Кожаные штаны',
+  'Брюки',
+  'Юбка',
+  'Шорты',
+  'Леггинсы',
+  'Спортивные штаны',
+  'Карго',
+  'Плиссированная юбка',
+  'Мини-юбка',
+  'Макси-юбка',
+  'Классические брюки',
+  'Зауженные брюки',
+  'Широкие брюки',
+  'Велосипедки',
+];
+
+const bottomClothingDescriptions: Record<string, string> = {
+  'Джинсы': 'джинсы',
+  'Кожаные штаны': 'кожаные штаны',
+  'Брюки': 'брюки',
+  'Юбка': 'юбка',
+  'Шорты': 'шорты',
+  'Леггинсы': 'леггинсы',
+  'Спортивные штаны': 'спортивные штаны',
+  'Карго': 'брюки карго',
+  'Плиссированная юбка': 'плиссированная юбка',
+  'Мини-юбка': 'мини-юбка',
+  'Макси-юбка': 'макси-юбка',
+  'Классические брюки': 'классические брюки',
+  'Зауженные брюки': 'зауженные брюки',
+  'Широкие брюки': 'широкие брюки',
+  'Велосипедки': 'велосипедки',
+};
+
+// Цвета одежды
+const clothingColorOptions = [
+  'Чёрный',
+  'Белый',
+  'Серый',
+  'Красный',
+  'Синий',
+  'Зелёный',
+  'Жёлтый',
+  'Оранжевый',
+  'Розовый',
+  'Фиолетовый',
+  'Коричневый',
+  'Бежевый',
+  'Голубой',
+  'Бордовый',
+  'Тёмно-синий',
+  'Оливковый',
+  'Хаки',
+  'Мятный',
+  'Лавандовый',
+  'Коралловый',
+  'Горчичный',
+  'Терракотовый',
+  'Изумрудный',
+  'Индиго',
+];
+
+const clothingColorDescriptions: Record<string, string> = {
+  'Чёрный': 'чёрный',
+  'Белый': 'белый',
+  'Серый': 'серый',
+  'Красный': 'красный',
+  'Синий': 'синий',
+  'Зелёный': 'зелёный',
+  'Жёлтый': 'жёлтый',
+  'Оранжевый': 'оранжевый',
+  'Розовый': 'розовый',
+  'Фиолетовый': 'фиолетовый',
+  'Коричневый': 'коричневый',
+  'Бежевый': 'бежевый',
+  'Голубой': 'голубой',
+  'Бордовый': 'бордовый',
+  'Тёмно-синий': 'тёмно-синий',
+  'Оливковый': 'оливковый',
+  'Хаки': 'хаки',
+  'Мятный': 'мятный',
+  'Лавандовый': 'лавандовый',
+  'Коралловый': 'коралловый',
+  'Горчичный': 'горчичный',
+  'Терракотовый': 'терракотовый',
+  'Изумрудный': 'изумрудный',
+  'Индиго': 'индиго',
+};
+
+// Головные уборы
+const headwearOptions = [
+  'Без головного убора',
+  'Шляпа',
+  'Бейсболка',
+  'Берет',
+  'Панама',
+  'Шапка',
+  'Повязка на голову',
+  'Ободок',
+  'Платок',
+  'Тюрбан',
+  'Фетровая шляпа',
+  'Цилиндр',
+  'Кепка',
+  'Капюшон',
+];
+
+const headwearDescriptions: Record<string, string> = {
+  'Без головного убора': 'без головного убора',
+  'Шляпа': 'шляпа с полями',
+  'Бейсболка': 'бейсболка',
+  'Берет': 'берет',
+  'Панама': 'панама',
+  'Шапка': 'шапка',
+  'Повязка на голову': 'повязка на голову',
+  'Ободок': 'ободок',
+  'Платок': 'платок',
+  'Тюрбан': 'тюрбан',
+  'Фетровая шляпа': 'фетровая шляпа',
+  'Цилиндр': 'цилиндр',
+  'Кепка': 'кепка',
+  'Капюшон': 'капюшон',
+};
+
+// Эмоции
+const emotionOptions = [
+  'Спокойствие',
+  'Радость',
+  'Грусть',
+  'Задумчивость',
+  'Страсть',
+  'Загадочность',
+  'Уверенность',
+  'Уязвимость',
+  'Сила',
+  'Нежность',
+  'Дерзость',
+  'Меланхолия',
+  'Восторг',
+  'Сосредоточенность',
+  'Отстранённость',
+  'Игривость',
+  'Серьёзность',
+  'Мечтательность',
+];
+
+const emotionDescriptions: Record<string, string> = {
+  'Спокойствие': 'расслабленные черты лица, умиротворённое выражение',
+  'Радость': 'естественная улыбка, светящиеся глаза',
+  'Грусть': 'опущенные уголки губ, задумчивое выражение',
+  'Задумчивость': 'сосредоточенное выражение, лёгкая задумчивость',
+  'Страсть': 'напряжённые черты, интенсивное выражение',
+  'Загадочность': 'нейтральное выражение, лёгкая недосказанность',
+  'Уверенность': 'поднятый подбородок, твёрдое выражение',
+  'Уязвимость': 'открытое выражение, мягкие черты',
+  'Сила': 'напряжённые мышцы, решительное выражение',
+  'Нежность': 'мягкие черты, тёплое выражение',
+  'Дерзость': 'вызывающее выражение, лёгкая усмешка',
+  'Меланхолия': 'грустное выражение, опущенный взгляд',
+  'Восторг': 'широкая улыбка, открытое выражение',
+  'Сосредоточенность': 'концентрированное выражение, напряжённое внимание',
+  'Отстранённость': 'нейтральное выражение, эмоциональная дистанция',
+  'Игривость': 'лёгкая улыбка, озорное выражение',
+  'Серьёзность': 'строгое выражение, сжатые губы',
+  'Мечтательность': 'расслабленное выражение, лёгкая задумчивость',
+};
+
+// Позы
+const poseOptions = [
+  'Классический портрет',
+  'Три четверти',
+  'Профиль',
+  'Анфас',
+  'С лёгким поворотом',
+  'Динамичная поза',
+  'Сидя',
+  'Стоя с опорой',
+  'В движении',
+  'Крупный план лица',
+  'Поясной портрет',
+  'Ростовой портрет',
+  'С руками у лица',
+  'Со скрещенными руками',
+  'С опорой на стену',
+  'В прыжке',
+  'На коленях',
+  'Лёжа',
+];
+
+const poseDescriptions: Record<string, string> = {
+  'Классический портрет': 'классическая портретная поза',
+  'Три четверти': 'поворот тела в три четверти',
+  'Профиль': 'профиль',
+  'Анфас': 'анфас',
+  'С лёгким поворотом': 'лёгкий поворот тела',
+  'Динамичная поза': 'динамичная поза с движением',
+  'Сидя': 'сидячая поза',
+  'Стоя с опорой': 'стоя с опорой',
+  'В движении': 'поза в движении',
+  'Крупный план лица': 'крупный план лица',
+  'Поясной портрет': 'поясной портрет',
+  'Ростовой портрет': 'ростовой портрет',
+  'С руками у лица': 'руки у лица',
+  'Со скрещенными руками': 'скрещенные руки',
+  'С опорой на стену': 'с опорой на стену',
+  'В прыжке': 'в прыжке',
+  'На коленях': 'на коленях',
+  'Лёжа': 'лёжа',
+};
+
+// Фоны
+const backgroundOptions = [
+  'Закатное солнце',
+  'Рассвет',
+  'Ночное небо',
+  'Облачное небо',
+  'Чистое голубое небо',
+  'Городские огни',
+  'Неоновые вывески',
+  'Лесная чаща',
+  'Горные вершины',
+  'Морской горизонт',
+  'Туманная дымка',
+  'Абстрактный градиент',
+  'Однотонный фон',
+  'Размытый интерьер',
+  'Боке огней',
+];
+
+const backgroundDescriptions: Record<string, string> = {
+  'Закатное солнце': 'закатное солнце с золотисто-оранжевой палитрой',
+  'Рассвет': 'рассвет с пастельными тонами',
+  'Ночное небо': 'ночное небо со звёздами',
+  'Облачное небо': 'облачное небо',
+  'Чистое голубое небо': 'голубое небо без облаков',
+  'Городские огни': 'городские огни ночью',
+  'Неоновые вывески': 'неоновые вывески',
+  'Лесная чаща': 'густой лес',
+  'Горные вершины': 'горные вершины',
+  'Морской горизонт': 'морской горизонт',
+  'Туманная дымка': 'туман',
+  'Абстрактный градиент': 'абстрактный градиент',
+  'Однотонный фон': 'однотонный фон',
+  'Размытый интерьер': 'размытый интерьер',
+  'Боке огней': 'боке огней',
+};
+
+// Окружения
+const environmentOptions = [
+  'Городская улица',
+  'Парк',
+  'Пляж',
+  'Горы',
+  'Лес',
+  'Пустыня',
+  'Промышленная зона',
+  'Студия',
+  'Квартира',
+  'Офис',
+  'Кафе',
+  'Ресторан',
+  'Галерея',
+  'Музей',
+  'Театр',
+];
+
+const environmentDescriptions: Record<string, string> = {
+  'Городская улица': 'городская улица с архитектурой',
+  'Парк': 'парк с зелёными аллеями',
+  'Пляж': 'песчаный пляж с морем',
+  'Горы': 'горный пейзаж',
+  'Лес': 'лес с деревьями',
+  'Пустыня': 'пустынный ландшафт',
+  'Промышленная зона': 'индустриальная зона с металлическими конструкциями',
+  'Студия': 'фотостудия с контролируемым освещением',
+  'Квартира': 'жилая квартира',
+  'Офис': 'офисное помещение',
+  'Кафе': 'кафе с тёплым освещением',
+  'Ресторан': 'ресторан с приглушённым светом',
+  'Галерея': 'художественная галерея с белыми стенами',
+  'Музей': 'музейный зал',
+  'Театр': 'театральный зал',
+};
+
+// Локации
+const locationOptions = [
+  'Асфальт',
+  'Мраморный пол',
+  'Деревянный настил',
+  'Бетонная стена',
+  'Песок',
+  'Трава',
+  'Вода',
+  'Зеркальная поверхность',
+  'Тёмный бархат',
+  'Белый холст',
+];
+
+const locationDescriptions: Record<string, string> = {
+  'Асфальт': 'текстурированный асфальт с трещинами',
+  'Мраморный пол': 'мраморный пол с прожилками',
+  'Деревянный настил': 'деревянный настил с текстурой волокон',
+  'Бетонная стена': 'бетонная стена с индустриальной фактурой',
+  'Песок': 'золотистый песок',
+  'Трава': 'зелёная трава',
+  'Вода': 'водная гладь с рябью',
+  'Зеркальная поверхность': 'зеркальная поверхность с отражениями',
+  'Тёмный бархат': 'тёмный бархат',
+  'Белый холст': 'белый холст',
+};
+
+// Настроения
+const toneOptions = [
+  'Бунтарский',
+  'Романтичный',
+  'Драматичный',
+  'Меланхоличный',
+  'Весёлый',
+  'Мистический',
+  'Элегантный',
+  'Агрессивный',
+  'Нежный',
+  'Загадочный',
+  'Ностальгический',
+  'Энергичный',
+  'Спокойный',
+  'Тревожный',
+  'Триумфальный',
+  'Сенсуальный',
+];
+
+// Освещение
+const lightingOptions = [
+  'High‑key',
+  'Low‑key',
+  'Естественный свет',
+  'Золотой час',
+  'Синий час',
+  'Контровой свет',
+  'Боковой свет',
+  'Мягкий рассеянный',
+  'Жёсткий направленный',
+  'Неоновый',
+  'Свечи',
+  'Студийный',
+  'Rembrandt',
+  'Split lighting',
+  'Butterfly lighting',
+];
+
+// Negative prompt
+const negativeItems = [
+  'перегруженный кадр',
+  'лишние предметы рядом с объектом',
+  'хаос',
+  'резкие тени',
+  'низкая резкость',
+  'зернистость',
+  'текст',
+  'логотипы',
+  'блики',
+  'неестественная кожа',
+  'мусор / грязь',
+  'водяные знаки',
+  'случайные люди в кадре',
+];
+
 export default function App() {
+  const [data, setData] = useState<PromptData>({
+    photoType: 'Fashion-фотография',
+    style: '',
+    artStyle: '',
+    filter: '',
+    format: '16:9',
+    angle: 'Фронтальный',
+    bodyPart: '',
+    focus: '',
+    position: '',
+    distance: '',
+    object: '',
+    age: '',
+    hair: '',
+    makeup: '',
+    topClothing: '',
+    topClothingColor: '',
+    bottomClothing: '',
+    bottomClothingColor: '',
+    headwear: '',
+    emotion: '',
+    pose: '',
+    background: '',
+    environment: '',
+    location: '',
+    tone: '',
+    lighting: '',
+    mainColor: '',
+    accentColor: '',
+    textureElement: '',
+    negatives: [...negativeItems],
+    customNegative: '',
+  });
+
+  const [generatedPrompt, setGeneratedPrompt] = useState('');
+  const [copied, setCopied] = useState(false);
+
+  const handleChange = (field: keyof PromptData, value: string) => {
+    setData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const toggleNegative = (item: string) => {
+    setData(prev => ({
+      ...prev,
+      negatives: prev.negatives.includes(item)
+        ? prev.negatives.filter(n => n !== item)
+        : [...prev.negatives, item],
+    }));
+  };
+
+  const generatePrompt = useCallback(() => {
+    const paragraphs: string[] = [];
+    const portraitTypes = ['Портрет', 'Fashion-фотография', 'Стрит-фото', 'Свадебная фотография'];
+    const isPortrait = portraitTypes.includes(data.photoType);
+
+    // Абзац 1: Стиль и технические параметры (ПЕРВЫМИ!)
+    const styleParts: string[] = [];
+    if (data.photoType) {
+      styleParts.push(photoTypeDescriptions[data.photoType] || data.photoType);
+    }
+    if (data.style) {
+      styleParts.push(data.style);
+    }
+    if (data.artStyle) {
+      styleParts.push(artStyleDescriptions[data.artStyle] || data.artStyle);
+    }
+    if (data.filter && data.filter !== 'Без фильтра') {
+      styleParts.push(filterDescriptions[data.filter] || data.filter);
+    }
+    if (data.format) {
+      styleParts.push(`формат ${data.format}`);
+    }
+    if (styleParts.length) {
+      paragraphs.push(styleParts.join(', ') + '.');
+    }
+
+    // Абзац 2: Композиция (ВТОРЫМ!)
+    if (data.angle || data.bodyPart || data.focus || data.position || data.distance) {
+      const compParts: string[] = [];
+      
+      if (data.angle) {
+        compParts.push(`съёмка ведётся ${data.angle.toLowerCase()} ракурс`);
+      }
+      
+      if (data.bodyPart) {
+        compParts.push(`в фокусе ${bodyPartDescriptions[data.bodyPart] || data.bodyPart}`);
+      } else if (data.focus) {
+        compParts.push(focusDescriptions[data.focus] || data.focus);
+      }
+      
+      if (data.position) {
+        compParts.push(`объект расположен ${positionDescriptions[data.position] || data.position}`);
+      }
+      
+      if (compParts.length) {
+        paragraphs.push(compParts.join(', ') + '.');
+      }
+    }
+
+    // Абзац 3: Объект и детали (ТРЕТЬИМ!)
+    if (data.object) {
+      let intro = '';
+      
+      // Дальность в начале
+      if (data.distance) {
+        const distanceDesc = distanceDescriptions[data.distance] || data.distance;
+        intro += distanceDesc + ' от кадра ';
+      }
+      
+      intro += data.object;
+      
+      if (isPortrait) {
+        const details: string[] = [];
+        if (data.age) details.push(ageDescriptions[data.age] || data.age);
+        if (data.hair) details.push(hairDescriptions[data.hair] || data.hair);
+        if (data.makeup) details.push(makeupDescriptions[data.makeup] || data.makeup);
+        
+        if (details.length) {
+          intro += ', ' + details.join(', ');
+        }
+        
+        const clothing: string[] = [];
+        if (data.topClothing) {
+          let top = topClothingDescriptions[data.topClothing] || data.topClothing;
+          if (data.topClothingColor) top += ` ${clothingColorDescriptions[data.topClothingColor] || data.topClothingColor} цвета`;
+          clothing.push(top);
+        }
+        if (data.bottomClothing) {
+          let bottom = bottomClothingDescriptions[data.bottomClothing] || data.bottomClothing;
+          if (data.bottomClothingColor) bottom += ` ${clothingColorDescriptions[data.bottomClothingColor] || data.bottomClothingColor} цвета`;
+          clothing.push(bottom);
+        }
+        
+        if (clothing.length) {
+          intro += `, одет${isPortrait && !data.object.toLowerCase().includes('мужчин') && !data.object.toLowerCase().includes('человек') ? 'а' : ''} в ${clothing.join(' и ')}`;
+        }
+        
+        if (data.headwear && data.headwear !== 'Без головного убора') {
+          intro += `, на голове ${headwearDescriptions[data.headwear] || data.headwear}`;
+        }
+      }
+      
+      paragraphs.push('На фотографии — ' + intro + '.');
+    }
+
+    // Абзац 4: Эмоция и поза
+    if (isPortrait && (data.emotion || data.pose)) {
+      const emotionPoseParts: string[] = [];
+      
+      if (data.emotion) {
+        emotionPoseParts.push(`Выражение лица передаёт ${emotionDescriptions[data.emotion] || data.emotion}`);
+      }
+      
+      if (data.pose) {
+        emotionPoseParts.push(`${data.object} находится в позе: ${poseDescriptions[data.pose] || data.pose}`);
+      }
+      
+      if (emotionPoseParts.length) {
+        paragraphs.push(emotionPoseParts.join('. ') + '.');
+      }
+    }
+
+    // Абзац 5: Окружение
+    if (data.background) {
+      const bgDesc = backgroundDescriptions[data.background] || data.background;
+      paragraphs.push(`На заднем плане виднеется ${bgDesc}.`);
+    } else if (data.environment || data.location) {
+      const envParts: string[] = [];
+      if (data.environment) envParts.push(environmentDescriptions[data.environment] || data.environment);
+      if (data.location) envParts.push(locationDescriptions[data.location] || data.location);
+      if (envParts.length) {
+        paragraphs.push(`Окружение: ${envParts.join(', ')}.`);
+      }
+    }
+
+    // Абзац 6: Настроение и свет
+    if (data.tone || data.lighting) {
+      const moodParts: string[] = [];
+      if (data.tone) moodParts.push(data.tone.toLowerCase());
+      if (data.lighting) moodParts.push(`освещение ${data.lighting.toLowerCase()}`);
+      paragraphs.push(`Общее настроение снимка — ${moodParts.join(', ')}.`);
+    }
+
+    // Абзац 7: Цвета и текстура (если есть)
+    if (data.mainColor || data.accentColor || data.textureElement) {
+      const colorParts: string[] = [];
+      const colors = [data.mainColor, data.accentColor].filter(Boolean);
+      if (colors.length) colorParts.push(`палитра ${colors.join(' и ')}`);
+      if (data.textureElement) colorParts.push(`акцент на текстуру ${data.textureElement}`);
+      if (colorParts.length) paragraphs.push(colorParts.join(', ') + '.');
+    }
+
+    // Negative prompt
+    const negativeList = [
+      ...data.negatives,
+      ...(data.customNegative.trim() ? data.customNegative.split(',').map(s => s.trim()).filter(Boolean) : []),
+    ];
+    if (negativeList.length) {
+      paragraphs.push(`\nNegative prompt: ${negativeList.join(', ')}.`);
+    }
+
+    setGeneratedPrompt(paragraphs.join('\n\n'));
+    setCopied(false);
+  }, [data]);
+
+  const copyToClipboard = async () => {
+    try {
+      await navigator.clipboard.writeText(generatedPrompt);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error('Ошибка копирования:', err);
+    }
+  };
+
+  const resetForm = () => {
+    setData({
+      photoType: 'Fashion-фотография',
+      style: '',
+      artStyle: '',
+      filter: '',
+      format: '16:9',
+      angle: 'Фронтальный',
+      bodyPart: '',
+      focus: '',
+      position: '',
+      distance: '',
+      object: '',
+      age: '',
+      hair: '',
+      makeup: '',
+      topClothing: '',
+      topClothingColor: '',
+      bottomClothing: '',
+      bottomClothingColor: '',
+      headwear: '',
+      emotion: '',
+      pose: '',
+      background: '',
+      environment: '',
+      location: '',
+      tone: '',
+      lighting: '',
+      mainColor: '',
+      accentColor: '',
+      textureElement: '',
+      negatives: [...negativeItems],
+      customNegative: '',
+    });
+    setGeneratedPrompt('');
+  };
+
+  const portraitTypes = ['Портрет', 'Fashion-фотография', 'Стрит-фото', 'Свадебная фотография'];
+  const isPortraitType = portraitTypes.includes(data.photoType);
+
   return (
-    <div/>
+    <div className="min-h-screen bg-gradient-to-br from-gray-950 via-purple-950 to-gray-950 text-white p-4">
+      <div className="max-w-7xl mx-auto">
+        <h1 className="text-3xl font-bold text-center mb-8 bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
+          📸 Генератор промптов для AI-фотографии
+        </h1>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Левая колонка - настройки */}
+          <div className="space-y-4">
+            {/* Стиль и технические параметры */}
+            <div className="bg-black/30 backdrop-blur-sm rounded-2xl border border-purple-500/20 p-5">
+              <h2 className="text-lg font-semibold text-purple-300 mb-4">🎨 Стиль и технические параметры</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs text-gray-400 mb-1">Тип фотографии</label>
+                  <select
+                    value={data.photoType}
+                    onChange={(e) => handleChange('photoType', e.target.value)}
+                    className="w-full px-3 py-2 bg-gray-800/50 border border-purple-500/30 rounded-lg text-white text-sm"
+                  >
+                    {photoTypeOptions.map(opt => (
+                      <option key={opt} value={opt}>{opt}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-400 mb-1">Стиль</label>
+                  <select
+                    value={data.style}
+                    onChange={(e) => handleChange('style', e.target.value)}
+                    className="w-full px-3 py-2 bg-gray-800/50 border border-purple-500/30 rounded-lg text-white text-sm"
+                  >
+                    <option value="">Не выбрано</option>
+                    {styleOptions.map(opt => (
+                      <option key={opt} value={opt}>{opt}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-400 mb-1">Художественный стиль</label>
+                  <select
+                    value={data.artStyle}
+                    onChange={(e) => handleChange('artStyle', e.target.value)}
+                    className="w-full px-3 py-2 bg-gray-800/50 border border-purple-500/30 rounded-lg text-white text-sm"
+                  >
+                    <option value="">Не выбрано</option>
+                    {artStyleOptions.map(opt => (
+                      <option key={opt} value={opt}>{opt}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-400 mb-1">Фильтр</label>
+                  <select
+                    value={data.filter}
+                    onChange={(e) => handleChange('filter', e.target.value)}
+                    className="w-full px-3 py-2 bg-gray-800/50 border border-purple-500/30 rounded-lg text-white text-sm"
+                  >
+                    {filterOptions.map(opt => (
+                      <option key={opt} value={opt}>{opt}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-400 mb-1">Формат</label>
+                  <select
+                    value={data.format}
+                    onChange={(e) => handleChange('format', e.target.value)}
+                    className="w-full px-3 py-2 bg-gray-800/50 border border-purple-500/30 rounded-lg text-white text-sm"
+                  >
+                    {formatOptions.map(opt => (
+                      <option key={opt} value={opt}>{opt}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            {/* Композиция */}
+            <div className="bg-black/30 backdrop-blur-sm rounded-2xl border border-blue-500/20 p-5">
+              <h2 className="text-lg font-semibold text-blue-300 mb-4">📐 Композиция</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs text-gray-400 mb-1">Ракурс</label>
+                  <select
+                    value={data.angle}
+                    onChange={(e) => handleChange('angle', e.target.value)}
+                    className="w-full px-3 py-2 bg-gray-800/50 border border-blue-500/30 rounded-lg text-white text-sm"
+                  >
+                    <option value="">Не выбрано</option>
+                    {angleOptions.map(opt => (
+                      <option key={opt} value={opt}>{opt}</option>
+                    ))}
+                  </select>
+                </div>
+                {isPortraitType ? (
+                  <div>
+                    <label className="block text-xs text-gray-400 mb-1">Части тела в кадре</label>
+                    <select
+                      value={data.bodyPart}
+                      onChange={(e) => handleChange('bodyPart', e.target.value)}
+                      className="w-full px-3 py-2 bg-gray-800/50 border border-blue-500/30 rounded-lg text-white text-sm"
+                    >
+                      <option value="">Не выбрано</option>
+                      {bodyPartOptions.map(opt => (
+                        <option key={opt} value={opt}>{opt}</option>
+                      ))}
+                    </select>
+                  </div>
+                ) : (
+                  <div>
+                    <label className="block text-xs text-gray-400 mb-1">Фокус на объекте</label>
+                    <select
+                      value={data.focus}
+                      onChange={(e) => handleChange('focus', e.target.value)}
+                      className="w-full px-3 py-2 bg-gray-800/50 border border-blue-500/30 rounded-lg text-white text-sm"
+                    >
+                      <option value="">Не выбрано</option>
+                      {focusOptions.map(opt => (
+                        <option key={opt} value={opt}>{opt}</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+                <div>
+                  <label className="block text-xs text-gray-400 mb-1">Дальность</label>
+                  <select
+                    value={data.distance}
+                    onChange={(e) => handleChange('distance', e.target.value)}
+                    className="w-full px-3 py-2 bg-gray-800/50 border border-blue-500/30 rounded-lg text-white text-sm"
+                  >
+                    <option value="">Не выбрано</option>
+                    {distanceOptions.map(opt => (
+                      <option key={opt} value={opt}>{opt}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-400 mb-1">Позиция в кадре</label>
+                  <select
+                    value={data.position}
+                    onChange={(e) => handleChange('position', e.target.value)}
+                    className="w-full px-3 py-2 bg-gray-800/50 border border-blue-500/30 rounded-lg text-white text-sm"
+                  >
+                    <option value="">Не выбрано</option>
+                    {positionOptions.map(opt => (
+                      <option key={opt} value={opt}>{opt}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            {/* Объект */}
+            <div className="bg-black/30 backdrop-blur-sm rounded-2xl border border-pink-500/20 p-5">
+              <h2 className="text-lg font-semibold text-pink-300 mb-4">🎯 Объект</h2>
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-xs text-gray-400 mb-1">Объект</label>
+                  <input
+                    type="text"
+                    value={data.object}
+                    onChange={(e) => handleChange('object', e.target.value)}
+                    placeholder="Например: Женщина"
+                    className="w-full px-3 py-2 bg-gray-800/50 border border-pink-500/30 rounded-lg text-white text-sm"
+                  />
+                </div>
+                {isPortraitType && (
+                  <>
+                    <div>
+                      <label className="block text-xs text-gray-400 mb-1">Возраст</label>
+                      <select
+                        value={data.age}
+                        onChange={(e) => handleChange('age', e.target.value)}
+                        className="w-full px-3 py-2 bg-gray-800/50 border border-pink-500/30 rounded-lg text-white text-sm"
+                      >
+                        <option value="">Не выбрано</option>
+                        {ageOptions.map(opt => (
+                          <option key={opt} value={opt}>{opt}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-xs text-gray-400 mb-1">Причёска</label>
+                        <select
+                          value={data.hair}
+                          onChange={(e) => handleChange('hair', e.target.value)}
+                          className="w-full px-3 py-2 bg-gray-800/50 border border-pink-500/30 rounded-lg text-white text-sm"
+                        >
+                          <option value="">Не выбрано</option>
+                          {hairOptions.map(opt => (
+                            <option key={opt} value={opt}>{opt}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-xs text-gray-400 mb-1">Макияж</label>
+                        <select
+                          value={data.makeup}
+                          onChange={(e) => handleChange('makeup', e.target.value)}
+                          className="w-full px-3 py-2 bg-gray-800/50 border border-pink-500/30 rounded-lg text-white text-sm"
+                        >
+                          <option value="">Не выбрано</option>
+                          {makeupOptions.map(opt => (
+                            <option key={opt} value={opt}>{opt}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-xs text-gray-400 mb-1">Одежда (верх)</label>
+                        <input
+                          type="text"
+                          value={data.topClothing}
+                          onChange={(e) => handleChange('topClothing', e.target.value)}
+                          list="topClothingList"
+                          placeholder="Например: свитер ручной вязки"
+                          className="w-full px-3 py-2 bg-gray-800/50 border border-pink-500/30 rounded-lg text-white text-sm"
+                        />
+                        <datalist id="topClothingList">
+                          {topClothingOptions.map(opt => (
+                            <option key={opt} value={opt} />
+                          ))}
+                        </datalist>
+                      </div>
+                      <div>
+                        <label className="block text-xs text-gray-400 mb-1">Цвет верха</label>
+                        <select
+                          value={data.topClothingColor}
+                          onChange={(e) => handleChange('topClothingColor', e.target.value)}
+                          className="w-full px-3 py-2 bg-gray-800/50 border border-pink-500/30 rounded-lg text-white text-sm"
+                        >
+                          <option value="">Не выбрано</option>
+                          {clothingColorOptions.map(opt => (
+                            <option key={opt} value={opt}>{opt}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-xs text-gray-400 mb-1">Одежда (низ)</label>
+                        <input
+                          type="text"
+                          value={data.bottomClothing}
+                          onChange={(e) => handleChange('bottomClothing', e.target.value)}
+                          list="bottomClothingList"
+                          placeholder="Например: шёлковые брюки"
+                          className="w-full px-3 py-2 bg-gray-800/50 border border-pink-500/30 rounded-lg text-white text-sm"
+                        />
+                        <datalist id="bottomClothingList">
+                          {bottomClothingOptions.map(opt => (
+                            <option key={opt} value={opt} />
+                          ))}
+                        </datalist>
+                      </div>
+                      <div>
+                        <label className="block text-xs text-gray-400 mb-1">Цвет низа</label>
+                        <select
+                          value={data.bottomClothingColor}
+                          onChange={(e) => handleChange('bottomClothingColor', e.target.value)}
+                          className="w-full px-3 py-2 bg-gray-800/50 border border-pink-500/30 rounded-lg text-white text-sm"
+                        >
+                          <option value="">Не выбрано</option>
+                          {clothingColorOptions.map(opt => (
+                            <option key={opt} value={opt}>{opt}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-xs text-gray-400 mb-1">Головной убор</label>
+                      <select
+                        value={data.headwear}
+                        onChange={(e) => handleChange('headwear', e.target.value)}
+                        className="w-full px-3 py-2 bg-gray-800/50 border border-pink-500/30 rounded-lg text-white text-sm"
+                      >
+                        <option value="">Не выбрано</option>
+                        {headwearOptions.map(opt => (
+                          <option key={opt} value={opt}>{opt}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-xs text-gray-400 mb-1">Эмоция</label>
+                        <select
+                          value={data.emotion}
+                          onChange={(e) => handleChange('emotion', e.target.value)}
+                          className="w-full px-3 py-2 bg-gray-800/50 border border-pink-500/30 rounded-lg text-white text-sm"
+                        >
+                          <option value="">Не выбрано</option>
+                          {emotionOptions.map(opt => (
+                            <option key={opt} value={opt}>{opt}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-xs text-gray-400 mb-1">Поза</label>
+                        <select
+                          value={data.pose}
+                          onChange={(e) => handleChange('pose', e.target.value)}
+                          className="w-full px-3 py-2 bg-gray-800/50 border border-pink-500/30 rounded-lg text-white text-sm"
+                        >
+                          <option value="">Не выбрано</option>
+                          {poseOptions.map(opt => (
+                            <option key={opt} value={opt}>{opt}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+
+            {/* Окружение */}
+            <div className="bg-black/30 backdrop-blur-sm rounded-2xl border border-green-500/20 p-5">
+              <h2 className="text-lg font-semibold text-green-300 mb-4">🌍 Окружение</h2>
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-xs text-gray-400 mb-1">Фон</label>
+                  <select
+                    value={data.background}
+                    onChange={(e) => handleChange('background', e.target.value)}
+                    className="w-full px-3 py-2 bg-gray-800/50 border border-green-500/30 rounded-lg text-white text-sm"
+                  >
+                    <option value="">Не выбрано</option>
+                    {backgroundOptions.map(opt => (
+                      <option key={opt} value={opt}>{opt}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs text-gray-400 mb-1">Окружение</label>
+                    <select
+                      value={data.environment}
+                      onChange={(e) => handleChange('environment', e.target.value)}
+                      className="w-full px-3 py-2 bg-gray-800/50 border border-green-500/30 rounded-lg text-white text-sm"
+                    >
+                      <option value="">Не выбрано</option>
+                      {environmentOptions.map(opt => (
+                        <option key={opt} value={opt}>{opt}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-400 mb-1">Локация</label>
+                    <select
+                      value={data.location}
+                      onChange={(e) => handleChange('location', e.target.value)}
+                      className="w-full px-3 py-2 bg-gray-800/50 border border-green-500/30 rounded-lg text-white text-sm"
+                    >
+                      <option value="">Не выбрано</option>
+                      {locationOptions.map(opt => (
+                        <option key={opt} value={opt}>{opt}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Настроение и свет */}
+            <div className="bg-black/30 backdrop-blur-sm rounded-2xl border border-yellow-500/20 p-5">
+              <h2 className="text-lg font-semibold text-yellow-300 mb-4">💡 Настроение и свет</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs text-gray-400 mb-1">Настроение</label>
+                  <select
+                    value={data.tone}
+                    onChange={(e) => handleChange('tone', e.target.value)}
+                    className="w-full px-3 py-2 bg-gray-800/50 border border-yellow-500/30 rounded-lg text-white text-sm"
+                  >
+                    <option value="">Не выбрано</option>
+                    {toneOptions.map(opt => (
+                      <option key={opt} value={opt}>{opt}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-400 mb-1">Освещение</label>
+                  <select
+                    value={data.lighting}
+                    onChange={(e) => handleChange('lighting', e.target.value)}
+                    className="w-full px-3 py-2 bg-gray-800/50 border border-yellow-500/30 rounded-lg text-white text-sm"
+                  >
+                    <option value="">Не выбрано</option>
+                    {lightingOptions.map(opt => (
+                      <option key={opt} value={opt}>{opt}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            {/* Цвета и текстура */}
+            <div className="bg-black/30 backdrop-blur-sm rounded-2xl border border-orange-500/20 p-5">
+              <h2 className="text-lg font-semibold text-orange-300 mb-4">🎨 Цвета и текстура</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs text-gray-400 mb-1">Основной цвет</label>
+                  <input
+                    type="text"
+                    value={data.mainColor}
+                    onChange={(e) => handleChange('mainColor', e.target.value)}
+                    placeholder="Например: тёмно-синий"
+                    className="w-full px-3 py-2 bg-gray-800/50 border border-orange-500/30 rounded-lg text-white text-sm"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-400 mb-1">Акцентный цвет</label>
+                  <input
+                    type="text"
+                    value={data.accentColor}
+                    onChange={(e) => handleChange('accentColor', e.target.value)}
+                    placeholder="Например: оранжевый"
+                    className="w-full px-3 py-2 bg-gray-800/50 border border-orange-500/30 rounded-lg text-white text-sm"
+                  />
+                </div>
+                <div className="md:col-span-2">
+                  <label className="block text-xs text-gray-400 mb-1">Текстура</label>
+                  <input
+                    type="text"
+                    value={data.textureElement}
+                    onChange={(e) => handleChange('textureElement', e.target.value)}
+                    placeholder="Например: кожа, ткань, металл"
+                    className="w-full px-3 py-2 bg-gray-800/50 border border-orange-500/30 rounded-lg text-white text-sm"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Negative prompt */}
+            <div className="bg-black/30 backdrop-blur-sm rounded-2xl border border-red-500/20 p-5">
+              <h2 className="text-lg font-semibold text-red-300 mb-4">🚫 Negative prompt</h2>
+              <div className="flex flex-wrap gap-2 mb-3">
+                {negativeItems.map(item => (
+                  <button
+                    key={item}
+                    onClick={() => toggleNegative(item)}
+                    className={`px-3 py-1 rounded-lg text-xs transition-all ${
+                      data.negatives.includes(item)
+                        ? 'bg-red-600/30 border border-red-500/50 text-red-200'
+                        : 'bg-gray-800/30 border border-gray-700/30 text-gray-500 hover:border-gray-500/50'
+                    }`}
+                  >
+                    {data.negatives.includes(item) ? '✕' : '+'} {item}
+                  </button>
+                ))}
+              </div>
+              <input
+                type="text"
+                value={data.customNegative}
+                onChange={(e) => handleChange('customNegative', e.target.value)}
+                placeholder="Добавить свои ограничения через запятую..."
+                className="w-full px-3 py-2 bg-gray-800/50 border border-red-500/30 rounded-lg text-white text-sm"
+              />
+            </div>
+
+            {/* Кнопки */}
+            <div className="flex gap-3">
+              <button
+                onClick={generatePrompt}
+                className="flex-1 px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-semibold rounded-xl shadow-lg shadow-purple-500/20 transition-all"
+              >
+                ✨ Генерировать промпт
+              </button>
+              <button
+                onClick={resetForm}
+                className="px-6 py-3 bg-gray-800/60 hover:bg-gray-700/60 border border-gray-600/30 text-gray-300 rounded-xl transition-all"
+              >
+                🔄 Сбросить
+              </button>
+            </div>
+          </div>
+
+          {/* Правая колонка - результат */}
+          <div className="lg:sticky lg:top-4 lg:self-start">
+            <div className="bg-black/30 backdrop-blur-sm rounded-2xl border border-green-500/20 p-5">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-semibold text-green-300">📝 Готовый промпт</h2>
+                {generatedPrompt && (
+                  <button
+                    onClick={copyToClipboard}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                      copied
+                        ? 'bg-green-600 text-white'
+                        : 'bg-gray-700 hover:bg-gray-600 text-gray-300'
+                    }`}
+                  >
+                    {copied ? '✓ Скопировано!' : '📋 Копировать'}
+                  </button>
+                )}
+              </div>
+
+              {generatedPrompt ? (
+                <pre className="whitespace-pre-wrap bg-gray-900/80 border border-gray-700/50 rounded-xl p-4 text-sm text-gray-200 font-mono leading-relaxed max-h-[70vh] overflow-y-auto">
+                  {generatedPrompt}
+                </pre>
+              ) : (
+                <div className="bg-gray-900/40 border border-dashed border-gray-700/50 rounded-xl p-10 text-center">
+                  <div className="text-5xl mb-3">🎨</div>
+                  <p className="text-gray-500 text-sm">
+                    Заполните параметры и нажмите<br />
+                    <span className="text-purple-400 font-medium">«Генерировать промпт»</span>
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }
