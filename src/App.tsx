@@ -3,6 +3,7 @@ import { useState, useCallback } from 'react';
 // Типы данных
 interface PromptData {
   photoType: string;
+  magazine: string;
   style: string;
   artStyle: string;
   filter: string;
@@ -60,6 +61,57 @@ const photoTypeDescriptions: Record<string, string> = {
   'Натюрморт': 'натюрморт',
   'Спортивная съёмка': 'спортивная съёмка',
   'Рекламная съёмка': 'рекламная съёмка',
+};
+
+// Журналы и издания
+const magazineOptions = [
+  'Vogue',
+  'Harper\'s Bazaar',
+  'Elle',
+  'Cosmopolitan',
+  'Marie Claire',
+  'L\'Officiel',
+  'Numéro',
+  'Dazed',
+  'i-D',
+  'Another Magazine',
+  'W Magazine',
+  'Interview Magazine',
+  'GQ',
+  'Esquire',
+  'Glamour',
+  'InStyle',
+  'Vanity Fair',
+  'National Geographic',
+  'Time',
+  'Life',
+  'The New York Times Magazine',
+  'The Guardian Weekend',
+];
+
+const magazineDescriptions: Record<string, string> = {
+  'Vogue': 'стиль Vogue — высокая мода, глянцевая эстетика, драматичное освещение, безупречная композиция',
+  'Harper\'s Bazaar': 'стиль Harper\'s Bazaar — элегантность, утончённость, художественная фотография, мягкий свет',
+  'Elle': 'стиль Elle — современная мода, яркие цвета, динамичные позы, молодёжная эстетика',
+  'Cosmopolitan': 'стиль Cosmopolitan — яркая гламурная эстетика, смелые позы, выразительный макияж',
+  'Marie Claire': 'стиль Marie Claire — естественная красота, мягкий свет, женственность, утончённость',
+  'L\'Officiel': 'стиль L\'Officiel — французская элегантность, haute couture, художественная композиция',
+  'Numéro': 'стиль Numéro — минимализм, чёрно-белая эстетика, графичность, современный подход',
+  'Dazed': 'стиль Dazed — альтернативная мода, креативность, нестандартные позы, молодёжная культура',
+  'i-D': 'стиль i-D — британская уличная мода, документальный подход, естественность, character portraits',
+  'Another Magazine': 'стиль Another Magazine — арт-фотография, концептуальный подход, экспериментальная композиция',
+  'W Magazine': 'стиль W Magazine — гламур, роскошь, драматичные портреты, кинематографичность',
+  'Interview Magazine': 'стиль Interview Magazine — знаменитости, интимные портреты, чёрно-белая классика',
+  'GQ': 'стиль GQ — мужская мода, элегантность, утончённость, профессиональные портреты',
+  'Esquire': 'стиль Esquire — мужская элегантность, классические портреты, интеллектуальная эстетика',
+  'Glamour': 'стиль Glamour — женственная мода, яркие цвета, позитивная энергия, доступная роскошь',
+  'InStyle': 'стиль InStyle — современная мода, доступная роскошь, естественная красота, lifestyle',
+  'Vanity Fair': 'стиль Vanity Fair — знаменитости, драматичные портреты, кинематографичность, голливудский гламур',
+  'National Geographic': 'стиль National Geographic — документальная фотография, природные цвета, выразительные портреты, этнография',
+  'Time': 'стиль Time — новостная фотография, документальный подход, выразительные моменты, социальная значимость',
+  'Life': 'стиль Life — классическая документальная фотография, чёрно-белая эстетика, исторические моменты',
+  'The New York Times Magazine': 'стиль The New York Times Magazine — интеллектуальная фотография, современные портреты, культурный контекст',
+  'The Guardian Weekend': 'стиль The Guardian Weekend — британская эстетика, естественность, современные портреты, lifestyle',
 };
 
 // Стили
@@ -334,12 +386,12 @@ const ageOptions = [
 
 const ageDescriptions: Record<string, string> = {
   'Малыш (0-3 года)': 'малыш с пухлыми щёчками и нежными чертами',
-  'Ребёнок (4-12 лет)': 'ребёнок с живыми глазами и непосредственным выражением',
+  'Ребёнок (4-12 лет)': 'ребёнок с открытым, непосредственным выражением лица',
   'Подросток (13-17 лет)': 'подросток с переходными чертами и юношеской энергией',
   'Молодого возраста (18-30 лет)': 'человек молодого возраста с упругой кожей и свежим видом',
-  'Взрослого возраста (31-50 лет)': 'человек взрослого возраста с зрелыми чертами и уверенным взглядом',
-  'Пожилого возраста (51-70 лет)': 'человек пожилого возраста с морщинами опыта и мудрым взглядом',
-  'Старческого возраста (70+ лет)': 'человек старческого возраста с глубокими морщинами и взглядом, полным жизненной мудрости',
+  'Взрослого возраста (31-50 лет)': 'человек взрослого возраста с зрелыми чертами лица, спокойное выражение',
+  'Пожилого возраста (51-70 лет)': 'человек пожилого возраста с морщинами на лице, спокойное и сосредоточенное выражение',
+  'Старческого возраста (70+ лет)': 'человек старческого возраста с глубокими морщинами на лице, спокойное и задумчивое выражение',
 };
 
 // Причёски
@@ -624,7 +676,7 @@ const emotionOptions = [
 
 const emotionDescriptions: Record<string, string> = {
   'Спокойствие': 'расслабленные черты лица, умиротворённое выражение',
-  'Радость': 'естественная улыбка, светящиеся глаза',
+  'Радость': 'широкая улыбка, приподнятые уголки губ, расслабленное выражение лица',
   'Грусть': 'опущенные уголки губ, задумчивое выражение',
   'Задумчивость': 'сосредоточенное выражение, лёгкая задумчивость',
   'Страсть': 'напряжённые черты, интенсивное выражение',
@@ -634,7 +686,7 @@ const emotionDescriptions: Record<string, string> = {
   'Сила': 'напряжённые мышцы, решительное выражение',
   'Нежность': 'мягкие черты, тёплое выражение',
   'Дерзость': 'вызывающее выражение, лёгкая усмешка',
-  'Меланхолия': 'грустное выражение, опущенный взгляд',
+  'Меланхолия': 'грустное выражение лица, опущенные уголки губ, задумчивое выражение',
   'Восторг': 'широкая улыбка, открытое выражение',
   'Сосредоточенность': 'концентрированное выражение, напряжённое внимание',
   'Отстранённость': 'нейтральное выражение, эмоциональная дистанция',
@@ -846,6 +898,7 @@ const negativeItems = [
 export default function App() {
   const [data, setData] = useState<PromptData>({
     photoType: 'Fashion-фотография',
+    magazine: '',
     style: '',
     artStyle: '',
     filter: '',
@@ -903,6 +956,9 @@ export default function App() {
     const styleParts: string[] = [];
     if (data.photoType) {
       styleParts.push(photoTypeDescriptions[data.photoType] || data.photoType);
+    }
+    if (data.magazine) {
+      styleParts.push(magazineDescriptions[data.magazine] || data.magazine);
     }
     if (data.style) {
       styleParts.push(data.style);
@@ -1062,6 +1118,7 @@ export default function App() {
   const resetForm = () => {
     setData({
       photoType: 'Fashion-фотография',
+      magazine: '',
       style: '',
       artStyle: '',
       filter: '',
@@ -1121,6 +1178,19 @@ export default function App() {
                     className="w-full px-3 py-2 bg-gray-800/50 border border-purple-500/30 rounded-lg text-white text-sm"
                   >
                     {photoTypeOptions.map(opt => (
+                      <option key={opt} value={opt}>{opt}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-400 mb-1">Журнал/издание (стиль)</label>
+                  <select
+                    value={data.magazine}
+                    onChange={(e) => handleChange('magazine', e.target.value)}
+                    className="w-full px-3 py-2 bg-gray-800/50 border border-purple-500/30 rounded-lg text-white text-sm"
+                  >
+                    <option value="">Не выбрано</option>
+                    {magazineOptions.map(opt => (
                       <option key={opt} value={opt}>{opt}</option>
                     ))}
                   </select>
