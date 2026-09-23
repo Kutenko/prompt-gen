@@ -1820,68 +1820,7 @@ export default function App() {
                         </select>
                       </div>
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      <div>
-                        <label className="block text-xs text-gray-400 mb-1">Одежда (верх)</label>
-                        <input
-                          type="text"
-                          value={data.topClothing}
-                          onChange={(e) => handleChange('topClothing', e.target.value)}
-                          list="topClothingList"
-                          placeholder="Например: свитер ручной вязки"
-                          className="w-full px-3 py-2 bg-gray-800/50 border border-pink-500/30 rounded-lg text-white text-sm"
-                        />
-                        <datalist id="topClothingList">
-                          {topClothingOptions.map(opt => (
-                            <option key={opt} value={opt} />
-                          ))}
-                        </datalist>
-                      </div>
-                      <div>
-                        <label className="block text-xs text-gray-400 mb-1">Цвет верха</label>
-                        <select
-                          value={data.topClothingColor}
-                          onChange={(e) => handleChange('topClothingColor', e.target.value)}
-                          className="w-full px-3 py-2 bg-gray-800/50 border border-pink-500/30 rounded-lg text-white text-sm"
-                        >
-                          <option value="">Не выбрано</option>
-                          {clothingColorOptions.map(opt => (
-                            <option key={opt} value={opt}>{opt}</option>
-                          ))}
-                        </select>
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      <div>
-                        <label className="block text-xs text-gray-400 mb-1">Одежда (низ)</label>
-                        <input
-                          type="text"
-                          value={data.bottomClothing}
-                          onChange={(e) => handleChange('bottomClothing', e.target.value)}
-                          list="bottomClothingList"
-                          placeholder="Например: шёлковые брюки"
-                          className="w-full px-3 py-2 bg-gray-800/50 border border-pink-500/30 rounded-lg text-white text-sm"
-                        />
-                        <datalist id="bottomClothingList">
-                          {bottomClothingOptions.map(opt => (
-                            <option key={opt} value={opt} />
-                          ))}
-                        </datalist>
-                      </div>
-                      <div>
-                        <label className="block text-xs text-gray-400 mb-1">Цвет низа</label>
-                        <select
-                          value={data.bottomClothingColor}
-                          onChange={(e) => handleChange('bottomClothingColor', e.target.value)}
-                          className="w-full px-3 py-2 bg-gray-800/50 border border-pink-500/30 rounded-lg text-white text-sm"
-                        >
-                          <option value="">Не выбрано</option>
-                          {clothingColorOptions.map(opt => (
-                            <option key={opt} value={opt}>{opt}</option>
-                          ))}
-                        </select>
-                      </div>
-                    </div>
+
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                       <div>
                         <label className="block text-xs text-gray-400 mb-1">Головной убор</label>
@@ -1930,6 +1869,77 @@ export default function App() {
                 )}
               </div>
             </div>
+
+            {/* Одежда - только для людей */}
+            {peopleObjects.includes(data.object) && (
+              <div className="bg-black/30 backdrop-blur-sm rounded-2xl border border-indigo-500/20 p-5">
+                <h2 className="text-lg font-semibold text-indigo-300 mb-4">👗 Одежда</h2>
+                <div className="space-y-3">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs text-gray-400 mb-1">Одежда (верх)</label>
+                      <input
+                        type="text"
+                        value={data.topClothing}
+                        onChange={(e) => handleChange('topClothing', e.target.value)}
+                        list="topClothingList"
+                        placeholder="Например: свитер ручной вязки"
+                        className="w-full px-3 py-2 bg-gray-800/50 border border-indigo-500/30 rounded-lg text-white text-sm"
+                      />
+                      <datalist id="topClothingList">
+                        {topClothingOptions.map(opt => (
+                          <option key={opt} value={opt} />
+                        ))}
+                      </datalist>
+                    </div>
+                    <div>
+                      <label className="block text-xs text-gray-400 mb-1">Цвет верха</label>
+                      <select
+                        value={data.topClothingColor}
+                        onChange={(e) => handleChange('topClothingColor', e.target.value)}
+                        className="w-full px-3 py-2 bg-gray-800/50 border border-indigo-500/30 rounded-lg text-white text-sm"
+                      >
+                        <option value="">Не выбрано</option>
+                        {clothingColorOptions.map(opt => (
+                          <option key={opt} value={opt}>{opt}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs text-gray-400 mb-1">Одежда (низ)</label>
+                      <input
+                        type="text"
+                        value={data.bottomClothing}
+                        onChange={(e) => handleChange('bottomClothing', e.target.value)}
+                        list="bottomClothingList"
+                        placeholder="Например: шёлковые брюки"
+                        className="w-full px-3 py-2 bg-gray-800/50 border border-indigo-500/30 rounded-lg text-white text-sm"
+                      />
+                      <datalist id="bottomClothingList">
+                        {bottomClothingOptions.map(opt => (
+                          <option key={opt} value={opt} />
+                        ))}
+                      </datalist>
+                    </div>
+                    <div>
+                      <label className="block text-xs text-gray-400 mb-1">Цвет низа</label>
+                      <select
+                        value={data.bottomClothingColor}
+                        onChange={(e) => handleChange('bottomClothingColor', e.target.value)}
+                        className="w-full px-3 py-2 bg-gray-800/50 border border-indigo-500/30 rounded-lg text-white text-sm"
+                      >
+                        <option value="">Не выбрано</option>
+                        {clothingColorOptions.map(opt => (
+                          <option key={opt} value={opt}>{opt}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Окружение */}
             <div className="bg-black/30 backdrop-blur-sm rounded-2xl border border-green-500/20 p-5">
