@@ -1343,13 +1343,15 @@ export default function App() {
           }
           details.push(hairDesc);
         }
-        if (data.makeup) details.push(makeupDescriptions[data.makeup] || data.makeup);
         
         if (details.length) {
           intro += ', ' + details.join(', ');
         }
         
         const clothing: string[] = [];
+        if (data.makeup) {
+          clothing.push(makeupDescriptions[data.makeup] || data.makeup);
+        }
         if (data.topClothing) {
           let top = topClothingDescriptions[data.topClothing] || data.topClothing;
           if (data.topClothingColor) top += ` ${clothingColorDescriptions[data.topClothingColor] || data.topClothingColor} цвета`;
@@ -1361,16 +1363,16 @@ export default function App() {
           clothing.push(bottom);
         }
         
-        if (clothing.length) {
-          intro += `, одет${isPortrait && !data.object.toLowerCase().includes('мужчин') && !data.object.toLowerCase().includes('человек') ? 'а' : ''} в ${clothing.join(' и ')}`;
-        }
-        
         if (data.headwear && data.headwear !== 'Без головного убора') {
           let headwearDesc = headwearDescriptions[data.headwear] || data.headwear;
           if (data.headwearColor) {
             headwearDesc += ' ' + (headwearColorDescriptions[data.headwearColor] || data.headwearColor);
           }
-          intro += `, на голове ${headwearDesc}`;
+          clothing.push(headwearDesc);
+        }
+        
+        if (clothing.length) {
+          intro += `, ${clothing.join(', ')}`;
         }
       }
       
@@ -1806,44 +1808,6 @@ export default function App() {
                           ))}
                         </select>
                       </div>
-                      <div>
-                        <label className="block text-xs text-gray-400 mb-1">Макияж</label>
-                        <select
-                          value={data.makeup}
-                          onChange={(e) => handleChange('makeup', e.target.value)}
-                          className="w-full px-3 py-2 bg-gray-800/50 border border-pink-500/30 rounded-lg text-white text-sm"
-                        >
-                          <option value="">Не выбрано</option>
-                          {makeupOptions.map(opt => (
-                            <option key={opt} value={opt}>{opt}</option>
-                          ))}
-                        </select>
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      <div>
-                        <label className="block text-xs text-gray-400 mb-1">Головной убор</label>
-                        <SelectWithCustom
-                          value={data.headwear}
-                          onChange={(v) => handleChange('headwear', v)}
-                          options={headwearOptions}
-                          placeholder="Выберите или введите свой вариант"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-xs text-gray-400 mb-1">Цвет головного убора</label>
-                        <select
-                          value={data.headwearColor}
-                          onChange={(e) => handleChange('headwearColor', e.target.value)}
-                          className="w-full px-3 py-2 bg-gray-800/50 border border-pink-500/30 rounded-lg text-white text-sm"
-                        >
-                          <option value="">Не выбрано</option>
-                          {headwearColorOptions.map(opt => (
-                            <option key={opt} value={opt}>{opt}</option>
-                          ))}
-                        </select>
-                      </div>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                       <div>
@@ -1936,6 +1900,43 @@ export default function App() {
                         ))}
                       </select>
                     </div>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs text-gray-400 mb-1">Макияж</label>
+                      <select
+                        value={data.makeup}
+                        onChange={(e) => handleChange('makeup', e.target.value)}
+                        className="w-full px-3 py-2 bg-gray-800/50 border border-indigo-500/30 rounded-lg text-white text-sm"
+                      >
+                        <option value="">Не выбрано</option>
+                        {makeupOptions.map(opt => (
+                          <option key={opt} value={opt}>{opt}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs text-gray-400 mb-1">Головной убор</label>
+                      <SelectWithCustom
+                        value={data.headwear}
+                        onChange={(v) => handleChange('headwear', v)}
+                        options={headwearOptions}
+                        placeholder="Выберите или введите свой вариант"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-400 mb-1">Цвет головного убора</label>
+                    <select
+                      value={data.headwearColor}
+                      onChange={(e) => handleChange('headwearColor', e.target.value)}
+                      className="w-full px-3 py-2 bg-gray-800/50 border border-indigo-500/30 rounded-lg text-white text-sm"
+                    >
+                      <option value="">Не выбрано</option>
+                      {headwearColorOptions.map(opt => (
+                        <option key={opt} value={opt}>{opt}</option>
+                      ))}
+                    </select>
                   </div>
                 </div>
               </div>
