@@ -6,7 +6,6 @@ interface PromptData {
   photoStyle: string; // Стиль в рамках типа (журнал/художник/референс)
   artStyle: string;
   filter: string;
-  format: string; // Формат изображения
   angle: string;
   focalLength: string; // Фокусное расстояние
   distance: string; // Дистанция (план)
@@ -230,19 +229,6 @@ const filterDescriptions: Record<string, string> = {
   'Без фильтра': 'без фильтра',
 };
 
-// Форматы изображения
-const formatOptions = [
-  '1:1',
-  '4:3',
-  '3:2',
-  '16:9',
-  '9:16',
-  '2:3',
-  '3:4',
-  '5:4',
-  '21:9',
-];
-
 // Фокусное расстояние с описаниями
 const focalLengthOptions = [
   'широкоугольный объектив 16–24 мм, угол обзора очень большой',
@@ -256,13 +242,13 @@ const focalLengthOptions = [
 
 // Дистанции (планы) с детальными описаниями
 const distanceOptions = [
-  'Макро план — дистанция минимальная, видны мельчайшие детали, текстуры',
-  'Крупный план — дистанция минимальная, объект занимает большую часть кадра, видны все детали лица или объекта',
-  'Средне-крупный план — объект показан до плеч, акцент на лице и эмоциях',
-  'Средний план — объект виден целиком или до середины, вокруг есть воздух',
-  'Средне-дальний план — объект показан полностью, виден контекст окружения',
-  'Общий план — объект в контексте окружения, вокруг очень много воздуха',
-  'Дальний план — объект маленький в кадре, доминирует окружение и пейзаж',
+  'Макро план — видны мельчайшие детали и текстуры',
+  'Крупный план — объект занимает большую часть кадра',
+  'Средне-крупный план — объект показан до плеч',
+  'Средний план — объект виден до середины',
+  'Средне-дальний план — объект показан полностью',
+  'Общий план — объект виден целиком с окружением',
+  'Дальний план — объект виден целиком, окружение доминирует',
 ];
 
 // Ракурсы с детальными описаниями
@@ -771,7 +757,6 @@ export default function App() {
     photoStyle: '',
     artStyle: '',
     filter: '',
-    format: '',
     angle: 'Фронтальный',
     focalLength: '',
     distance: '',
@@ -852,11 +837,6 @@ export default function App() {
     const paragraphs: string[] = [];
     const portraitTypes = ['Портрет', 'Fashion-фотография', 'Стрит-фото', 'Свадебная фотография'];
     const isPortrait = portraitTypes.includes(data.photoType);
-
-    // Формат изображения (в самом начале)
-    if (data.format) {
-      paragraphs.push(`нарисуй ${data.format}`);
-    }
 
     // Системный промпт (если есть)
     if (data.systemPrompt) {
@@ -1193,7 +1173,6 @@ export default function App() {
       photoStyle: '',
       artStyle: '',
       filter: '',
-      format: '',
       angle: 'Фронтальный',
       focalLength: '',
       distance: '',
@@ -1246,7 +1225,6 @@ export default function App() {
       photoStyle: randomChoiceWithEmpty(availableStyles, 0.4),
       artStyle: randomChoiceWithEmpty(artStyleOptions, 0.7),
       filter: randomChoiceWithEmpty(filterOptions.filter(f => f !== 'Без фильтра'), 0.6),
-      format: randomChoiceWithEmpty(formatOptions, 0.5),
       angle: randomChoice(angleOptions),
       focalLength: randomChoiceWithEmpty(focalLengthOptions, 0.4),
       distance: randomChoiceWithEmpty(distanceOptions, 0.4),
@@ -1340,19 +1318,6 @@ export default function App() {
                     className="w-full px-3 py-2 bg-gray-800/50 border border-purple-500/30 rounded-lg text-white text-sm"
                   >
                     {filterOptions.map(opt => (
-                      <option key={opt} value={opt}>{opt}</option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-xs text-gray-400 mb-1">Формат изображения</label>
-                  <select
-                    value={data.format}
-                    onChange={(e) => handleChange('format', e.target.value)}
-                    className="w-full px-3 py-2 bg-gray-800/50 border border-purple-500/30 rounded-lg text-white text-sm"
-                  >
-                    <option value="">Не выбрано</option>
-                    {formatOptions.map(opt => (
                       <option key={opt} value={opt}>{opt}</option>
                     ))}
                   </select>
