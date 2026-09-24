@@ -677,29 +677,30 @@ function SelectWithCustom({
   options: string[];
   placeholder?: string;
 }) {
-  const [isCustom, setIsCustom] = useState(false);
-  const [customValue, setCustomValue] = useState('');
+  // Определяем, является ли текущее значение кастомным
+  const isCustomValue = value && !options.includes(value);
+  const [customInput, setCustomInput] = useState(isCustomValue ? value : '');
 
   const handleSelectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const selectedValue = e.target.value;
     if (selectedValue === '__custom__') {
-      setIsCustom(true);
-      setCustomValue('');
+      setCustomInput('');
+      onChange('');
     } else {
-      setIsCustom(false);
+      setCustomInput('');
       onChange(selectedValue);
     }
   };
 
   const handleCustomChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setCustomValue(e.target.value);
+    setCustomInput(e.target.value);
     onChange(e.target.value);
   };
 
   return (
     <div className="space-y-2">
       <select
-        value={isCustom ? '__custom__' : value}
+        value={isCustomValue || customInput ? '__custom__' : value}
         onChange={handleSelectChange}
         className="w-full px-3 py-2 bg-gray-800/50 border border-pink-500/30 rounded-lg text-white text-sm"
       >
@@ -709,10 +710,10 @@ function SelectWithCustom({
         ))}
         <option value="__custom__">✏️ Свой вариант...</option>
       </select>
-      {isCustom && (
+      {(isCustomValue || customInput) && (
         <input
           type="text"
-          value={customValue}
+          value={customInput || value}
           onChange={handleCustomChange}
           placeholder={placeholder || 'Введите свой вариант'}
           className="w-full px-3 py-2 bg-gray-800/50 border border-pink-500/30 rounded-lg text-white text-sm"
