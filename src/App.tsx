@@ -677,30 +677,33 @@ function SelectWithCustom({
   options: string[];
   placeholder?: string;
 }) {
-  // Определяем, является ли текущее значение кастомным
-  const isCustomValue = value && !options.includes(value);
-  const [customInput, setCustomInput] = useState(isCustomValue ? value : '');
+  // Локальное состояние для отслеживания режима "свой вариант"
+  const [isCustomMode, setIsCustomMode] = useState(false);
+  const [customInput, setCustomInput] = useState('');
 
   const handleSelectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const selectedValue = e.target.value;
     if (selectedValue === '__custom__') {
+      setIsCustomMode(true);
       setCustomInput('');
-      onChange('');
+      // Не вызываем onChange здесь, чтобы не очищать значение
     } else {
+      setIsCustomMode(false);
       setCustomInput('');
       onChange(selectedValue);
     }
   };
 
   const handleCustomChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setCustomInput(e.target.value);
-    onChange(e.target.value);
+    const newValue = e.target.value;
+    setCustomInput(newValue);
+    onChange(newValue);
   };
 
   return (
     <div className="space-y-2">
       <select
-        value={isCustomValue || customInput ? '__custom__' : value}
+        value={isCustomMode ? '__custom__' : value}
         onChange={handleSelectChange}
         className="w-full px-3 py-2 bg-gray-800/50 border border-pink-500/30 rounded-lg text-white text-sm"
       >
@@ -710,13 +713,14 @@ function SelectWithCustom({
         ))}
         <option value="__custom__">✏️ Свой вариант...</option>
       </select>
-      {(isCustomValue || customInput) && (
+      {isCustomMode && (
         <input
           type="text"
-          value={customInput || value}
+          value={customInput}
           onChange={handleCustomChange}
           placeholder={placeholder || 'Введите свой вариант'}
           className="w-full px-3 py-2 bg-gray-800/50 border border-pink-500/30 rounded-lg text-white text-sm"
+          autoFocus
         />
       )}
     </div>
@@ -759,6 +763,7 @@ export default function App() {
   const [copied, setCopied] = useState(false);
 
   const handleChange = (field: keyof PromptData, value: string) => {
+    console.log(`handleChange: field=${field}, value="${value}"`);
     setData(prev => {
       const newData = { ...prev, [field]: value };
       
@@ -772,9 +777,19 @@ export default function App() {
       }
       
       if (field === 'object') {
-        const availableActions = getAvailableActions(value);
-        if (prev.objectAction && !availableActions.includes(prev.objectAction)) {
-          newData.objectAction = '';
+        // Проверяем, является ли объект стандартным (из списка)
+        const allStandardObjects = [...peopleObjects, ...animalObjects, ...transportObjects, ...plantObjects, ...foodObjects, ...itemObjects, ...architectureObjects];
+        const isStandardObject = allStandardObjects.includes(value);
+        
+        if (isStandardObject) {
+          const availableActions = getAvailableActions(value);
+          console.log(`Available actions for standard object "${value}":`, availableActions);
+          if (prev.objectAction && !availableActions.includes(prev.objectAction)) {
+            console.log(`Clearing objectAction "${prev.objectAction}" as it's not available`);
+            newData.objectAction = '';
+          }
+        } else {
+          console.log(`Custom object "${value}" - keeping objectAction`);
         }
       }
       
@@ -792,6 +807,7 @@ export default function App() {
   };
 
   const generatePrompt = useCallback(() => {
+    console.log('Generating prompt with data:', data);
     const paragraphs: string[] = [];
     const portraitTypes = ['Портрет', 'Fashion-фотография', 'Стрит-фото', 'Свадебная фотография'];
     const isPortrait = portraitTypes.includes(data.photoType);
@@ -947,27 +963,57 @@ export default function App() {
   }, [data]);
 
   const copyToClipboard = async () => {
+    if (!generatedPrompt) {
+      console.warn('Нет промпта для копирования');
+      return;
+    }
+
     try {
-      if (navigator.clipboard && navigator.clipboard.writeText) {
+      // Попытка 1: Modern Clipboard API
+      if (navigator.clipboard && window.isSecureContext) {
         await navigator.clipboard.writeText(generatedPrompt);
-      } else {
-        const textArea = document.createElement('textarea');
-        textArea.value = generatedPrompt;
-        textArea.style.position = 'fixed';
-        textArea.style.left = '-999999px';
-        document.body.appendChild(textArea);
-        textArea.select();
-        try {
-          document.execCommand('copy');
-        } catch (err) {
-          console.error('Fallback копирование не сработало:', err);
-        }
-        document.body.removeChild(textArea);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+        return;
       }
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+
+      // Попытка 2: Fallback для не-secure контекста
+      const textArea = document.createElement('textarea');
+      textArea.value = generatedPrompt;
+      textArea.style.position = 'fixed';
+      textArea.style.top = '0';
+      textArea.style.left = '0';
+      textArea.style.width = '2em';
+      textArea.style.height = '2em';
+      textArea.style.padding = '0';
+      textArea.style.border = 'none';
+      textArea.style.outline = 'none';
+      textArea.style.boxShadow = 'none';
+      textArea.style.background = 'transparent';
+      textArea.style.opacity = '0';
+      
+      document.body.appendChild(textArea);
+      textArea.focus();
+      textArea.select();
+      
+      try {
+        const successful = document.execCommand('copy');
+        if (successful) {
+          setCopied(true);
+          setTimeout(() => setCopied(false), 2000);
+        } else {
+          console.error('Команда copy не выполнена');
+          alert('Не удалось скопировать. Пожалуйста, скопируйте текст вручную.');
+        }
+      } catch (err) {
+        console.error('Ошибка при выполнении copy:', err);
+        alert('Не удалось скопировать. Пожалуйста, скопируйте текст вручную.');
+      }
+      
+      document.body.removeChild(textArea);
     } catch (err) {
-      console.error('Ошибка копирования:', err);
+      console.error('Общая ошибка копирования:', err);
+      alert('Не удалось скопировать. Пожалуйста, скопируйте текст вручную.');
     }
   };
 
