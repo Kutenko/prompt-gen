@@ -665,6 +665,63 @@ const negativeItems = [
   'случайные люди в кадре',
 ];
 
+// Компонент для выбора из списка или ввода своего значения
+function SelectWithCustom({ 
+  value, 
+  onChange, 
+  options, 
+  placeholder 
+}: { 
+  value: string; 
+  onChange: (value: string) => void; 
+  options: string[];
+  placeholder?: string;
+}) {
+  const [isCustom, setIsCustom] = useState(false);
+  const [customValue, setCustomValue] = useState('');
+
+  const handleSelectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const selectedValue = e.target.value;
+    if (selectedValue === '__custom__') {
+      setIsCustom(true);
+      setCustomValue('');
+    } else {
+      setIsCustom(false);
+      onChange(selectedValue);
+    }
+  };
+
+  const handleCustomChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setCustomValue(e.target.value);
+    onChange(e.target.value);
+  };
+
+  return (
+    <div className="space-y-2">
+      <select
+        value={isCustom ? '__custom__' : value}
+        onChange={handleSelectChange}
+        className="w-full px-3 py-2 bg-gray-800/50 border border-pink-500/30 rounded-lg text-white text-sm"
+      >
+        <option value="">Не выбрано</option>
+        {options.map(opt => (
+          <option key={opt} value={opt}>{opt}</option>
+        ))}
+        <option value="__custom__">✏️ Свой вариант...</option>
+      </select>
+      {isCustom && (
+        <input
+          type="text"
+          value={customValue}
+          onChange={handleCustomChange}
+          placeholder={placeholder || 'Введите свой вариант'}
+          className="w-full px-3 py-2 bg-gray-800/50 border border-pink-500/30 rounded-lg text-white text-sm"
+        />
+      )}
+    </div>
+  );
+}
+
 export default function App() {
   const [data, setData] = useState<PromptData>({
     photoType: 'Fashion-фотография',
@@ -1120,29 +1177,21 @@ export default function App() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div>
                     <label className="block text-xs text-gray-400 mb-1">Объект</label>
-                    <select
+                    <SelectWithCustom
                       value={data.object}
-                      onChange={(e) => handleChange('object', e.target.value)}
-                      className="w-full px-3 py-2 bg-gray-800/50 border border-pink-500/30 rounded-lg text-white text-sm"
-                    >
-                      <option value="">Не выбрано</option>
-                      {getAvailableObjects(data.photoType).map(opt => (
-                        <option key={opt} value={opt}>{opt}</option>
-                      ))}
-                    </select>
+                      onChange={(v: string) => handleChange('object', v)}
+                      options={getAvailableObjects(data.photoType)}
+                      placeholder="Выберите или введите свой объект"
+                    />
                   </div>
                   <div>
                     <label className="block text-xs text-gray-400 mb-1">Действие объекта</label>
-                    <select
+                    <SelectWithCustom
                       value={data.objectAction}
-                      onChange={(e) => handleChange('objectAction', e.target.value)}
-                      className="w-full px-3 py-2 bg-gray-800/50 border border-pink-500/30 rounded-lg text-white text-sm"
-                    >
-                      <option value="">Не выбрано</option>
-                      {getAvailableActions(data.object).map(opt => (
-                        <option key={opt} value={opt}>{opt}</option>
-                      ))}
-                    </select>
+                      onChange={(v: string) => handleChange('objectAction', v)}
+                      options={getAvailableActions(data.object)}
+                      placeholder="Выберите или введите своё действие"
+                    />
                   </div>
                 </div>
                 {isPortraitType && (
