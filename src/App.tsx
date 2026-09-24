@@ -6,7 +6,10 @@ interface PromptData {
   photoStyle: string; // Стиль в рамках типа (журнал/художник/референс)
   artStyle: string;
   filter: string;
+  format: string; // Формат изображения
   angle: string;
+  focalLength: string; // Фокусное расстояние
+  distance: string; // Дистанция (план)
   focus: string;
   position: string;
   object: string;
@@ -226,6 +229,41 @@ const filterDescriptions: Record<string, string> = {
   'Зернистость': 'плёночная зернистость',
   'Без фильтра': 'без фильтра',
 };
+
+// Форматы изображения
+const formatOptions = [
+  '1:1',
+  '4:3',
+  '3:2',
+  '16:9',
+  '9:16',
+  '2:3',
+  '3:4',
+  '5:4',
+  '21:9',
+];
+
+// Фокусное расстояние с описаниями
+const focalLengthOptions = [
+  'широкоугольный объектив 16–24 мм, угол обзора очень большой',
+  'широкоугольный объектив 24–35 мм, угол обзора широкий',
+  'стандартный объектив 35–50 мм, естественная перспектива',
+  'портретный объектив 50–85 мм, мягкое размытие фона',
+  'телеобъектив 85–135 мм, сильное сжатие перспективы',
+  'длинный телеобъектив 135–200 мм, максимальное сжатие',
+  'супертелеобъектив 200+ мм, экстремальное сжатие перспективы',
+];
+
+// Дистанции (планы) с детальными описаниями
+const distanceOptions = [
+  'Макро план — дистанция минимальная, видны мельчайшие детали, текстуры',
+  'Крупный план — дистанция минимальная, объект занимает большую часть кадра, видны все детали лица или объекта',
+  'Средне-крупный план — объект показан до плеч, акцент на лице и эмоциях',
+  'Средний план — объект виден целиком или до середины, вокруг есть воздух',
+  'Средне-дальний план — объект показан полностью, виден контекст окружения',
+  'Общий план — объект в контексте окружения, вокруг очень много воздуха',
+  'Дальний план — объект маленький в кадре, доминирует окружение и пейзаж',
+];
 
 // Ракурсы с детальными описаниями
 const angleOptions = [
@@ -733,7 +771,10 @@ export default function App() {
     photoStyle: '',
     artStyle: '',
     filter: '',
+    format: '',
     angle: 'Фронтальный',
+    focalLength: '',
+    distance: '',
     focus: '',
     position: '',
     object: '',
@@ -812,6 +853,11 @@ export default function App() {
     const portraitTypes = ['Портрет', 'Fashion-фотография', 'Стрит-фото', 'Свадебная фотография'];
     const isPortrait = portraitTypes.includes(data.photoType);
 
+    // Формат изображения (в самом начале)
+    if (data.format) {
+      paragraphs.push(`нарисуй ${data.format}`);
+    }
+
     // Системный промпт (если есть)
     if (data.systemPrompt) {
       // Убираем переносы строк из системного промпта
@@ -838,7 +884,7 @@ export default function App() {
     }
 
     // Абзац 2: Композиция
-    if (data.angle || data.focus || data.position) {
+    if (data.angle || data.focalLength || data.focus || data.position || data.distance) {
       const compParts: string[] = [];
       
       if (data.angle) {
@@ -849,12 +895,24 @@ export default function App() {
         compParts.push(angleDesc);
       }
       
+      if (data.focalLength) {
+        compParts.push(data.focalLength);
+      }
+      
       if (data.focus) {
         compParts.push(data.focus);
       }
       
       if (data.position) {
         compParts.push(`объект расположен ${data.position.toLowerCase()}`);
+      }
+      
+      if (data.distance) {
+        // Убираем название дистанции, оставляем только описание после тире
+        const distanceDesc = data.distance.includes(' — ') 
+          ? data.distance.split(' — ')[1] 
+          : data.distance;
+        compParts.push(distanceDesc);
       }
       
       if (compParts.length) {
@@ -1135,7 +1193,10 @@ export default function App() {
       photoStyle: '',
       artStyle: '',
       filter: '',
+      format: '',
       angle: 'Фронтальный',
+      focalLength: '',
+      distance: '',
       focus: '',
       position: '',
       object: '',
@@ -1185,7 +1246,10 @@ export default function App() {
       photoStyle: randomChoiceWithEmpty(availableStyles, 0.4),
       artStyle: randomChoiceWithEmpty(artStyleOptions, 0.7),
       filter: randomChoiceWithEmpty(filterOptions.filter(f => f !== 'Без фильтра'), 0.6),
+      format: randomChoiceWithEmpty(formatOptions, 0.5),
       angle: randomChoice(angleOptions),
+      focalLength: randomChoiceWithEmpty(focalLengthOptions, 0.4),
+      distance: randomChoiceWithEmpty(distanceOptions, 0.4),
       focus: randomChoiceWithEmpty(focusOptions, 0.3),
       position: randomChoiceWithEmpty(positionOptions, 0.4),
       object: randomObject,
@@ -1280,6 +1344,19 @@ export default function App() {
                     ))}
                   </select>
                 </div>
+                <div>
+                  <label className="block text-xs text-gray-400 mb-1">Формат изображения</label>
+                  <select
+                    value={data.format}
+                    onChange={(e) => handleChange('format', e.target.value)}
+                    className="w-full px-3 py-2 bg-gray-800/50 border border-purple-500/30 rounded-lg text-white text-sm"
+                  >
+                    <option value="">Не выбрано</option>
+                    {formatOptions.map(opt => (
+                      <option key={opt} value={opt}>{opt}</option>
+                    ))}
+                  </select>
+                </div>
               </div>
             </div>
 
@@ -1296,6 +1373,32 @@ export default function App() {
                   >
                     <option value="">Не выбрано</option>
                     {angleOptions.map(opt => (
+                      <option key={opt} value={opt}>{opt}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-400 mb-1">Фокусное расстояние</label>
+                  <select
+                    value={data.focalLength}
+                    onChange={(e) => handleChange('focalLength', e.target.value)}
+                    className="w-full px-3 py-2 bg-gray-800/50 border border-blue-500/30 rounded-lg text-white text-sm"
+                  >
+                    <option value="">Не выбрано</option>
+                    {focalLengthOptions.map(opt => (
+                      <option key={opt} value={opt}>{opt}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-400 mb-1">Дистанция (план)</label>
+                  <select
+                    value={data.distance}
+                    onChange={(e) => handleChange('distance', e.target.value)}
+                    className="w-full px-3 py-2 bg-gray-800/50 border border-blue-500/30 rounded-lg text-white text-sm"
+                  >
+                    <option value="">Не выбрано</option>
+                    {distanceOptions.map(opt => (
                       <option key={opt} value={opt}>{opt}</option>
                     ))}
                   </select>
