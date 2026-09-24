@@ -814,7 +814,9 @@ export default function App() {
 
     // Системный промпт (если есть)
     if (data.systemPrompt) {
-      paragraphs.push(data.systemPrompt);
+      // Убираем переносы строк из системного промпта
+      const cleanSystemPrompt = data.systemPrompt.replace(/\n/g, ' ').replace(/\s+/g, ' ').trim();
+      paragraphs.push(cleanSystemPrompt);
     }
 
     // Абзац 1: Стиль и тип
@@ -955,10 +957,18 @@ export default function App() {
       ...(data.customNegative.trim() ? data.customNegative.split(',').map(s => s.trim()).filter(Boolean) : []),
     ];
     if (negativeList.length) {
-      paragraphs.push(`\nNegative prompt: ${negativeList.join(', ')}.`);
+      paragraphs.push(`Negative prompt: ${negativeList.join(', ')}.`);
     }
 
-    setGeneratedPrompt(paragraphs.join('\n\n'));
+    // Объединяем все части в один параграф без переносов
+    // Убираем лишние пробелы и переносы строк
+    const finalPrompt = paragraphs
+      .join(' ')
+      .replace(/\n/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+    
+    setGeneratedPrompt(finalPrompt);
     setCopied(false);
   }, [data]);
 
