@@ -978,18 +978,27 @@ export default function App() {
       return;
     }
 
-    try {
-      // Попытка 1: Modern Clipboard API
-      if (navigator.clipboard && window.isSecureContext) {
+    console.log('Пытаемся скопировать промпт...');
+
+    // Метод 1: Modern Clipboard API (работает на HTTPS и localhost)
+    if (navigator.clipboard && window.isSecureContext) {
+      try {
         await navigator.clipboard.writeText(generatedPrompt);
+        console.log('✓ Скопировано через Clipboard API');
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
         return;
+      } catch (err) {
+        console.warn('Clipboard API не сработал:', err);
       }
+    }
 
-      // Попытка 2: Fallback для не-secure контекста
+    // Метод 2: Fallback через textarea и execCommand
+    try {
       const textArea = document.createElement('textarea');
       textArea.value = generatedPrompt;
+      
+      // Стили для скрытия textarea
       textArea.style.position = 'fixed';
       textArea.style.top = '0';
       textArea.style.left = '0';
@@ -1001,30 +1010,123 @@ export default function App() {
       textArea.style.boxShadow = 'none';
       textArea.style.background = 'transparent';
       textArea.style.opacity = '0';
+      textArea.style.pointerEvents = 'none';
       
       document.body.appendChild(textArea);
       textArea.focus();
       textArea.select();
+      textArea.setSelectionRange(0, generatedPrompt.length);
       
-      try {
-        const successful = document.execCommand('copy');
-        if (successful) {
-          setCopied(true);
-          setTimeout(() => setCopied(false), 2000);
-        } else {
-          console.error('Команда copy не выполнена');
-          alert('Не удалось скопировать. Пожалуйста, скопируйте текст вручную.');
-        }
-      } catch (err) {
-        console.error('Ошибка при выполнении copy:', err);
-        alert('Не удалось скопировать. Пожалуйста, скопируйте текст вручную.');
+      const successful = document.execCommand('copy');
+      document.body.removeChild(textArea);
+      
+      if (successful) {
+        console.log('✓ Скопировано через execCommand');
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+        return;
+      } else {
+        console.warn('execCommand вернул false');
+      }
+    } catch (err) {
+      console.warn('execCommand не сработал:', err);
+    }
+
+    // Метод 3: Альтернативный fallback через selection
+    try {
+      const textArea = document.createElement('textarea');
+      textArea.value = generatedPrompt;
+      textArea.style.position = 'absolute';
+      textArea.style.left = '-999999px';
+      textArea.setAttribute('readonly', '');
+      
+      document.body.appendChild(textArea);
+      
+      // Сохраняем текущее выделение
+      const selected = document.getSelection()?.rangeCount ? 
+        document.getSelection()!.getRangeAt(0) : null;
+      
+      textArea.select();
+      textArea.setSelectionRange(0, generatedPrompt.length);
+      
+      const successful = document.execCommand('copy');
+      document.body.removeChild(textArea);
+      
+      // Восстанавливаем выделение
+      if (selected) {
+        document.getSelection()?.removeAllRanges();
+        document.getSelection()?.addRange(selected);
       }
       
-      document.body.removeChild(textArea);
+      if (successful) {
+        console.log('✓ Скопировано через альтернативный метод');
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+        return;
+      }
     } catch (err) {
-      console.error('Общая ошибка копирования:', err);
-      alert('Не удалось скопировать. Пожалуйста, скопируйте текст вручную.');
+      console.warn('Альтернативный метод не сработал:', err);
     }
+
+    // Если все методы не сработали - показываем инструкцию
+    console.error('Все методы копирования не сработали');
+    
+    // Создаем модальное окно с инструкцией
+    const modal = document.createElement('div');
+    modal.style.cssText = `
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+    `;
+    
+    const content = document.createElement('div');
+    content.style.cssText = `
+      background: #1a1a1a;
+      padding: 30px;
+      border-radius: 12px;
+      max-width: 500px;
+      color: white;
+      font-family: system-ui, -apple-system, sans-serif;
+    `;
+    
+    content.innerHTML = `
+      <h2 style="margin: 0 0 20px 0; color: #ff6b6b;">Не удалось скопировать автоматически</h2>
+      <p style="margin: 0 0 15px 0; line-height: 1.6;">
+        Пожалуйста, скопируйте промпт вручную:
+      </p>
+      <ol style="margin: 0 0 20px 0; line-height: 1.8; padding-left: 20px;">
+        <li>Закройте это окно</li>
+        <li>Выделите текст промпта мышью</li>
+        <li>Нажмите <kbd style="background: #333; padding: 2px 6px; border-radius: 3px;">Ctrl+C</kbd> (или <kbd style="background: #333; padding: 2px 6px; border-radius: 3px;">Cmd+C</kbd> на Mac)</li>
+      </ol>
+      <button onclick="this.parentElement.parentElement.remove()" style="
+        background: #6366f1;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 500;
+      ">Понятно</button>
+    `;
+    
+    modal.appendChild(content);
+    document.body.appendChild(modal);
+    
+    // Закрытие по клику на фон
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) {
+        modal.remove();
+      }
+    });
   };
 
   const resetForm = () => {
