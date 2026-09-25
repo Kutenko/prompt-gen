@@ -29,9 +29,26 @@ jobs:
       - run: npm ci
       - run: npm run build
 
-      - uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa # v3
+      # Повторяем логику actions/upload-pages-artifact вручную:
+      # оно является composite-действием и внутри вызывает
+      # actions/upload-artifact@v4 по тегу, что запрещено политикой репозитория
+      - name: Prepare GitHub Pages artifact
+        shell: bash
+        run: |
+          tar --dereference --hard-dereference \
+            -C dist \
+            -cvf "$RUNNER_TEMP/artifact.tar" \
+            --exclude=.git \
+            --exclude=.github \
+            .
+
+      - name: Upload GitHub Pages artifact
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
-          path: dist
+          name: github-pages
+          path: ${{ runner.temp }}/artifact.tar
+          retention-days: 1
+          if-no-files-found: error
 
   deploy:
     needs: build
