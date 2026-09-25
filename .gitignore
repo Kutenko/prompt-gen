@@ -1,5 +1,24 @@
+﻿# Dependencies
 node_modules/
-.next/
+
+# Build output
 dist/
 build/
+.next/
+
+# Logs
 *.log
+npm-debug.log*
+
+# Editor
+.vscode/
+.idea/
+
+# Env
+.env
+.env.local
+.env.*.local
+
+# OS
+.DS_Store
+Thumbs.db

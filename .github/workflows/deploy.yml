@@ -25,9 +25,6 @@ jobs:
           node-version: 20
           cache: 'npm'
 
-      - name: Configure base URL for GitHub Pages
-        run: sed -i 's|plugins: \[react(), tailwindcss()\],|plugins: [react(), tailwindcss()],\n  base: "./",|' vite.config.js
-
       - run: npm ci
       - run: npm run build
 
