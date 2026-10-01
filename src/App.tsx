@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 
 // Типы данных
 interface PromptData {
@@ -16,6 +16,12 @@ interface PromptData {
   hair: string;
   hairColor: string;
   makeup: string;
+  faceShape: string; // Форма лица
+  skinTone: string; // Цвет кожи
+  eyebrows: string; // Брови
+  eyes: string; // Форма глаз
+  lips: string; // Форма губ
+  nose: string; // Форма носа
   topClothing: string;
   topClothingColor: string;
   bottomClothing: string;
@@ -299,23 +305,293 @@ const getAvailableObjects = (photoType: string): string[] => {
 };
 
 // Действия
-const peopleActions = ['держит цветок', 'держит книгу', 'держит чашку', 'смотрит в окно', 'идёт по улице', 'сидит на стуле', 'стоит у стены', 'читает книгу', 'пьёт кофе', 'танцует', 'смеётся', 'мечтательно смотрит вдаль', 'смотрит в камеру'];
-const animalActions = ['бежит', 'сидит', 'стоит', 'лежит', 'играет', 'смотрит в камеру', 'ест', 'спит', 'плывёт', 'летит'];
-const transportActions = ['едет по дороге', 'стоит на парковке', 'мчится на скорости', 'припаркован', 'плывёт по воде', 'летит в небе'];
-const plantActions = ['цветёт', 'шелестит на ветру', 'растёт', 'покрыт росой', 'клонится под ветром'];
-const foodActions = ['парит', 'тает', 'украшено фруктами', 'подаётся на тарелке', 'наливается в бокал', 'дымится'];
-const itemActions = ['лежит на поверхности', 'отражает свет', 'открыта', 'закрыта', 'светится', 'блестит'];
-const architectureActions = ['возвышается', 'освещён закатным солнцем', 'отражается в воде', 'покрыт снегом', 'стоит в тумане'];
+const peopleActions = [
+  'смотрит в камеру',
+  'улыбается в объектив',
+  'позирует в полный рост',
+  'идёт по улице',
+  'сидит на стуле',
+  'стоит у стены',
+  'облокотился на стол',
+  'скрестил руки',
+  'смотрит в окно',
+  'выглядывает из окна',
+  'стоит на балконе',
+  'читает книгу',
+  'держит книгу',
+  'держит цветок',
+  'держит чашку',
+  'пьёт кофе',
+  'пьёт чай',
+  'держит смартфон',
+  'звонит по телефону',
+  'слушает музыку в наушниках',
+  'работает за ноутбуком',
+  'танцует',
+  'танцует вальс',
+  'смеётся',
+  'подмигивает',
+  'мечтательно смотрит вдаль',
+  'смотрит в зеркало',
+  'поправляет причёску',
+  'откидывает волосы назад',
+  'наносит макияж',
+  'завязывает шнурки',
+  'снимает пальто',
+  'несёт зонт',
+  'стоит под дождём',
+  'гуляет в парке',
+  'сидит на скамейке',
+  'лежит на траве',
+  'бежит трусцой',
+  'едет на велосипеде',
+  'играет на гитаре',
+  'рисует в блокноте',
+  'делает селфи',
+  'дует мыльные пузыри',
+  'держит воздушный шарик',
+  'обнимает близкого человека',
+  'играет с ребёнком',
+  'кормит птиц',
+  'поливает цветы',
+];
+const animalActions = [
+  'бежит',
+  'сидит',
+  'стоит',
+  'лежит',
+  'спит',
+  'играет',
+  'ест',
+  'смотрит в камеру',
+  'плывёт',
+  'летит',
+  'крадётся',
+  'охотится',
+  'наблюдает за добычей',
+  'зевает',
+  'потягивается',
+  'виляет хвостом',
+  'нюхает землю',
+  'чешет за ухом',
+  'греется на солнце',
+  'прячется в траве',
+  'выглядывает из норы',
+  'отдыхает в тени',
+  'идёт по снегу',
+  'купается в воде',
+  'чистит шерсть',
+  'воет на луну',
+  'пасётся',
+  'скачет галопом',
+  'приносит палку',
+  'гонится за мячом',
+  'строит гнездо',
+  'перелетает с ветки на ветку',
+];
+const transportActions = [
+  'едет по дороге',
+  'едет по трассе',
+  'мчится на скорости',
+  'обгоняет другой автомобиль',
+  'поворачивает на перекрёстке',
+  'съезжает с серпантина',
+  'едет по бездорожью',
+  'участвует в гонке',
+  'стоит на парковке',
+  'припаркован у дома',
+  'стоит в пробке',
+  'заряжается на станции',
+  'заправляется',
+  'моется на автомойке',
+  'перевозит груз',
+  'буксирует прицеп',
+  'блестит в свете фар',
+  'летит в небе',
+  'летит над облаками',
+  'набирает высоту',
+  'заходит на посадку',
+  'парит над городом',
+  'взлетает с полосы',
+  'плывёт по воде',
+  'плывёт по реке',
+  'идёт под парусом',
+  'покачивается на волнах',
+  'стоит в порту',
+];
+const plantActions = [
+  'цветёт',
+  'цветёт яркими бутонами',
+  'распускается на рассвете',
+  'шелестит на ветру',
+  'колышется на ветру',
+  'качается на ветру',
+  'клонится под ветром',
+  'растёт',
+  'тянется к солнцу',
+  'выпускает новые побеги',
+  'обвивает опору',
+  'покрыт росой',
+  'покрыт инеем',
+  'осыпается лепестками',
+  'зеленеет весной',
+  'обрамлён туманом',
+  'растёт у старой стены',
+  'отражается в воде',
+  'в окружении бабочек',
+];
+const foodActions = [
+  'парит',
+  'дымится',
+  'дымится паром',
+  'тает',
+  'выглядит свежим и сочным',
+  'подаётся на тарелке',
+  'подаётся на белой тарелке',
+  'украшено фруктами',
+  'украшено ягодами',
+  'украшено свежей зеленью',
+  'полито соусом',
+  'посыпано специями',
+  'посыпано сахарной пудрой',
+  'украшено шоколадной стружкой',
+  'покрыто глазурью',
+  'наливается в бокал',
+  'наливается в чашку',
+  'разлито по бокалам',
+  'взбито в пену',
+  'взрывается пузырьками',
+  'нарезано аккуратными ломтиками',
+  'лежит на льду',
+  'охлаждено',
+  'выглядит аппетитно',
+];
+const itemActions = [
+  'лежит на поверхности',
+  'аккуратно разложено',
+  'разложено на столе',
+  'лежит на бархатной подушке',
+  'стоит на полке',
+  'стоит на прилавке',
+  'висит на вешалке',
+  'закрыто в футляре',
+  'в руках человека',
+  'демонстрируется на стенде',
+  'подсвечено витриной',
+  'отражает свет',
+  'отбрасывает блики',
+  'блестит в лучах света',
+  'переливается на свету',
+  'светится',
+  'открыта',
+  'закрыта',
+  'парит на белом фоне',
+  'на подставке из акрила',
+  'отражается в зеркальной поверхности',
+  'окружено декоративными элементами',
+  'украшено деталями',
+  'выполнено из благородных материалов',
+];
+const architectureActions = [
+  'возвышается',
+  'возвышается на фоне неба',
+  'величественно стоит среди площади',
+  'выделяется на фоне города',
+  'стоит на берегу',
+  'освещён закатным солнцем',
+  'подсвечено ночными огнями',
+  'освещено прожекторами',
+  'сияет в лучах солнца',
+  'отражается в воде',
+  'отражается в стекле соседних зданий',
+  'покрыт снегом',
+  'покрыто мхом',
+  'стоит в тумане',
+  'утопает в зелени',
+  'в окружении туристов',
+  'окружено современными зданиями',
+  'гармонирует с окружением',
+  'имеет старинные фасады',
+  'видно издалека',
+];
 
-const getAvailableActions = (object: string): string[] => {
-  if (peopleObjects.includes(object)) return peopleActions;
-  if (animalObjects.includes(object)) return animalActions;
-  if (transportObjects.includes(object)) return transportActions;
-  if (plantObjects.includes(object)) return plantActions;
-  if (foodObjects.includes(object)) return foodActions;
-  if (itemObjects.includes(object)) return itemActions;
-  if (architectureObjects.includes(object)) return architectureActions;
-  return [];
+// Дополнительные действия для людей в зависимости от типа фотографии
+const actionExtrasByPhotoType: Record<string, string[]> = {
+  'Fashion-фотография': [
+    'дефилирует по подиуму',
+    'позирует для журнала',
+    'идёт навстречу ветру',
+    'поворачивается к камере в движении',
+    'откидывает волосы назад',
+    'демонстрирует наряд',
+    'показывает детали одежды',
+    'держит позу с распахнутым пальто',
+  ],
+  'Рекламная съёмка': [
+    'держит продукт в руках',
+    'демонстрирует товар',
+    'прикладывает продукт к лицу',
+    'пользуется продуктом',
+    'рассматривает товар',
+    'поднимает продукт на уровень глаз',
+    'протягивает руку с продуктом',
+    'улыбается, держа продукт',
+  ],
+  'Спортивная съёмка': [
+    'на бегу',
+    'в прыжке с мячом',
+    'наносит удар',
+    'делает рывок к финишу',
+    'забивает гол',
+    'тренируется',
+    'растягивается',
+    'поднимает штангу',
+  ],
+  'Стрит-фото': [
+    'переходит дорогу',
+    'ожидает автобус',
+    'разговаривает по телефону',
+    'несёт пакеты',
+    'сидит на ступеньках',
+    'едет на велосипеде',
+    'смотрит на витрину магазина',
+  ],
+  'Свадебная фотография': [
+    'держит букет невесты',
+    'кружит невесту',
+    'идёт по проходу',
+    'разбрасывает лепестки',
+    'обнимает партнёра',
+    'смотрит на обручальное кольцо',
+  ],
+};
+
+const allStandardActions = [
+  ...peopleActions,
+  ...animalActions,
+  ...transportActions,
+  ...plantActions,
+  ...foodActions,
+  ...itemActions,
+  ...architectureActions,
+  ...Object.values(actionExtrasByPhotoType).flat(),
+];
+
+const getAvailableActions = (object: string, photoType?: string): string[] => {
+  let actions: string[] = [];
+  if (peopleObjects.includes(object)) actions = peopleActions;
+  else if (animalObjects.includes(object)) actions = animalActions;
+  else if (transportObjects.includes(object)) actions = transportActions;
+  else if (plantObjects.includes(object)) actions = plantActions;
+  else if (foodObjects.includes(object)) actions = foodActions;
+  else if (itemObjects.includes(object)) actions = itemActions;
+  else if (architectureObjects.includes(object)) actions = architectureActions;
+
+  // Добавляем действия, соответствующие типу фотографии (для людей)
+  if (peopleObjects.includes(object) && photoType && actionExtrasByPhotoType[photoType]) {
+    actions = [...new Set([...actions, ...actionExtrasByPhotoType[photoType]])];
+  }
+  return actions;
 };
 
 // Возраст
@@ -385,6 +661,87 @@ const makeupDescriptions: Record<string, string> = {
   'Матовый': 'матовый макияж',
   'Готический': 'тёмный готический макияж',
   'Авангардный': 'авангардный креативный макияж',
+};
+
+// Внешность
+const faceShapeOptions = ['Овальное', 'Круглое', 'Квадратное', 'Вытянутое', 'Сердцевидное', 'Ромбовидное', 'Треугольное'];
+
+const faceShapeDescriptions: Record<string, string> = {
+  'Овальное': 'овальная форма лица',
+  'Круглое': 'круглая форма лица с мягкими чертами',
+  'Квадратное': 'квадратная форма лица с чёткой линией челюсти',
+  'Вытянутое': 'вытянутая овальная форма лица',
+  'Сердцевидное': 'сердцевидная форма лица с широкими скулами и узким подбородком',
+  'Ромбовидное': 'ромбовидная форма лица с высокими скулами',
+  'Треугольное': 'треугольная форма лица с узким подбородком',
+};
+
+const skinToneOptions = ['Фарфоровый', 'Светлый', 'Светло-бежевый', 'Оливковый', 'Смуглый', 'Тёмный', 'Золотистый', 'Розоватый'];
+
+const skinToneDescriptions: Record<string, string> = {
+  'Фарфоровый': 'фарфорово-белая кожа',
+  'Светлый': 'светлая кожа',
+  'Светло-бежевый': 'светло-бежевая кожа',
+  'Оливковый': 'оливковый оттенок кожи',
+  'Смуглый': 'смуглая кожа',
+  'Тёмный': 'тёмная кожа',
+  'Золотистый': 'золотистый оттенок кожи',
+  'Розоватый': 'кожа с розоватым подтоном',
+};
+
+const eyebrowsOptions = ['Прямые', 'Дугообразные', 'Изогнутые', 'Тонкие', 'Густые', 'Широкие', 'Вразлёт', 'С изломом'];
+
+const eyebrowsDescriptions: Record<string, string> = {
+  'Прямые': 'прямые брови',
+  'Дугообразные': 'дугообразные брови',
+  'Изогнутые': 'изогнутые брови с выраженным изгибом',
+  'Тонкие': 'тонкие аккуратные брови',
+  'Густые': 'густые выразительные брови',
+  'Широкие': 'широкие брови',
+  'Вразлёт': 'брови вразлёт',
+  'С изломом': 'брови с изломом',
+};
+
+const eyesOptions = ['Миндалевидные', 'Круглые', 'Большие выразительные', 'Узкие', 'Монолидные', 'С опущенными внешними уголками', 'С приподнятыми внешними уголками', 'Широко расставленные', 'Близко посаженные', 'Глубоко посаженные'];
+
+const eyesDescriptions: Record<string, string> = {
+  'Миндалевидные': 'миндалевидная форма глаз',
+  'Круглые': 'круглая форма глаз',
+  'Большие выразительные': 'большие выразительные глаза',
+  'Узкие': 'узкие глаза',
+  'Монолидные': 'монолидные глаза с восточным разрезом',
+  'С опущенными внешними уголками': 'глаза с опущенными внешними уголками',
+  'С приподнятыми внешними уголками': 'глаза с приподнятыми внешними уголками, кошачий разрез',
+  'Широко расставленные': 'широко расставленные глаза',
+  'Близко посаженные': 'близко посаженные глаза',
+  'Глубоко посаженные': 'глубоко посаженные глаза',
+};
+
+const lipsOptions = ['Полные', 'Тонкие', 'Средние', 'Пухлые', 'Чётко очерченные', 'С уголками вверх', 'С уголками вниз', 'Сердцевидные'];
+
+const lipsDescriptions: Record<string, string> = {
+  'Полные': 'полные губы',
+  'Тонкие': 'тонкие губы',
+  'Средние': 'губы средней полноты',
+  'Пухлые': 'пухлые губы с выразительной верхней губой',
+  'Чётко очерченные': 'чётко очерченные губы',
+  'С уголками вверх': 'губы с приподнятыми уголками',
+  'С уголками вниз': 'губы с опущенными уголками',
+  'Сердцевидные': 'сердцевидная форма губ',
+};
+
+const noseOptions = ['Прямой', 'С горбинкой', 'Курносый', 'Маленький', 'Аккуратный', 'Широкий', 'Тонкий', 'Вздёрнутый', 'Орлиный'];
+
+const noseDescriptions: Record<string, string> = {
+  'Прямой': 'прямой нос',
+  'С горбинкой': 'нос с лёгкой горбинкой',
+  'Курносый': 'курносый нос',
+  'Маленький': 'маленький аккуратный нос',
+  'Аккуратный': 'аккуратный нос',
+  'Широкий': 'широкий нос',
+  'Тонкий': 'тонкий изящный нос',
+  'Вздёрнутый': 'вздёрнутый нос',
+  'Орлиный': 'орлиный нос с выразительной спинкой',
 };
 
 // Одежда
@@ -673,44 +1030,49 @@ const negativeItems = [
 ];
 
 // Компонент для выбора из списка или ввода своего значения
-function SelectWithCustom({ 
-  value, 
-  onChange, 
-  options, 
-  placeholder 
-}: { 
-  value: string; 
-  onChange: (value: string) => void; 
+function SelectWithCustom({
+  value,
+  onChange,
+  options,
+  placeholder
+}: {
+  value: string;
+  onChange: (value: string) => void;
   options: string[];
   placeholder?: string;
 }) {
-  // Локальное состояние для отслеживания режима "свой вариант"
-  const [isCustomMode, setIsCustomMode] = useState(false);
-  const [customInput, setCustomInput] = useState('');
+  // Отслеживаем выбранное значение в <select>, включая псевдо-вариант "__custom__".
+  // Если значение пришло извне и его нет в списке — считаем его "своим вариантом".
+  const isCustomValue = (v: string) => v !== '' && !options.includes(v);
+
+  const [selectedRaw, setSelectedRaw] = useState<string>(
+    isCustomValue(value) ? '__custom__' : value
+  );
+
+  // Синхронизация с внешним значением (например, при смене типа фотографии или сбросе формы):
+  // если родитель очистил значение, выходим из режима "свой вариант".
+  useEffect(() => {
+    setSelectedRaw(isCustomValue(value) ? '__custom__' : value);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [value]);
 
   const handleSelectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const selectedValue = e.target.value;
-    if (selectedValue === '__custom__') {
-      setIsCustomMode(true);
-      setCustomInput('');
-      // Не вызываем onChange здесь, чтобы не очищать значение
-    } else {
-      setIsCustomMode(false);
-      setCustomInput('');
+    setSelectedRaw(selectedValue);
+    if (selectedValue !== '__custom__') {
       onChange(selectedValue);
     }
   };
 
   const handleCustomChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newValue = e.target.value;
-    setCustomInput(newValue);
-    onChange(newValue);
+    // Значение хранится в родителе, поэтому кастомный ввод сразу попадает в данные
+    onChange(e.target.value);
   };
 
   return (
     <div className="space-y-2">
       <select
-        value={isCustomMode ? '__custom__' : value}
+        value={selectedRaw}
         onChange={handleSelectChange}
         className="w-full px-3 py-2 bg-gray-800/50 border border-pink-500/30 rounded-lg text-white text-sm"
       >
@@ -720,10 +1082,10 @@ function SelectWithCustom({
         ))}
         <option value="__custom__">✏️ Свой вариант...</option>
       </select>
-      {isCustomMode && (
+      {selectedRaw === '__custom__' && (
         <input
           type="text"
-          value={customInput}
+          value={value}
           onChange={handleCustomChange}
           placeholder={placeholder || 'Введите свой вариант'}
           className="w-full px-3 py-2 bg-gray-800/50 border border-pink-500/30 rounded-lg text-white text-sm"
@@ -750,6 +1112,12 @@ export default function App() {
     hair: '',
     hairColor: '',
     makeup: '',
+    faceShape: '',
+    skinTone: '',
+    eyebrows: '',
+    eyes: '',
+    lips: '',
+    nose: '',
     topClothing: '',
     topClothingColor: '',
     bottomClothing: '',
@@ -776,7 +1144,10 @@ export default function App() {
       if (field === 'photoType') {
         newData.photoStyle = '';
         const availableObjects = getAvailableObjects(value);
-        if (prev.object && !availableObjects.includes(prev.object)) {
+        // Сбрасываем объект только если он стандартный и недоступен для нового типа.
+        // Свой (кастомный) вариант объекта сохраняется при смене типа фотографии,
+        // чтобы он не терялся из промпта после нажатия «Генерировать».
+        if (prev.object && allObjects.includes(prev.object) && !availableObjects.includes(prev.object)) {
           newData.object = '';
           newData.objectAction = '';
         }
@@ -784,13 +1155,14 @@ export default function App() {
       
       if (field === 'object') {
         // Проверяем, является ли объект стандартным (из списка)
-        const allStandardObjects = [...peopleObjects, ...animalObjects, ...transportObjects, ...plantObjects, ...foodObjects, ...itemObjects, ...architectureObjects];
-        const isStandardObject = allStandardObjects.includes(value);
+        const isStandardObject = allObjects.includes(value);
         
         if (isStandardObject) {
-          const availableActions = getAvailableActions(value);
+          const availableActions = getAvailableActions(value, prev.photoType);
           console.log(`Available actions for standard object "${value}":`, availableActions);
-          if (prev.objectAction && !availableActions.includes(prev.objectAction)) {
+          // Сбрасываем действие только если оно стандартное и недоступно для нового объекта.
+          // Своё (кастомное) действие сохраняется.
+          if (prev.objectAction && allStandardActions.includes(prev.objectAction) && !availableActions.includes(prev.objectAction)) {
             console.log(`Clearing objectAction "${prev.objectAction}" as it's not available`);
             newData.objectAction = '';
           }
@@ -815,8 +1187,9 @@ export default function App() {
   const generatePrompt = useCallback(() => {
     console.log('Generating prompt with data:', data);
     const paragraphs: string[] = [];
-    const portraitTypes = ['Портрет', 'Fashion-фотография', 'Стрит-фото', 'Свадебная фотография'];
-    const isPortrait = portraitTypes.includes(data.photoType);
+    // Детали человека (возраст, внешность, одежда и т.д.) доступны,
+    // когда на фотографии живой объект-человек — независимо от типа фотографии
+    const isPeopleObject = peopleObjects.includes(data.object);
 
     // Системный промпт (если есть)
     if (data.systemPrompt) {
@@ -885,9 +1258,15 @@ export default function App() {
         intro += ', ' + data.objectAction;
       }
       
-      if (isPortrait) {
+      if (isPeopleObject) {
         const details: string[] = [];
         if (data.age) details.push(ageDescriptions[data.age] || data.age);
+        if (data.faceShape) details.push(faceShapeDescriptions[data.faceShape] || data.faceShape);
+        if (data.skinTone) details.push(skinToneDescriptions[data.skinTone] || data.skinTone);
+        if (data.eyebrows) details.push(eyebrowsDescriptions[data.eyebrows] || data.eyebrows);
+        if (data.eyes) details.push(eyesDescriptions[data.eyes] || data.eyes);
+        if (data.lips) details.push(lipsDescriptions[data.lips] || data.lips);
+        if (data.nose) details.push(noseDescriptions[data.nose] || data.nose);
         if (data.hair) {
           let hairDesc = hairDescriptions[data.hair] || data.hair;
           if (data.hairColor) {
@@ -932,7 +1311,7 @@ export default function App() {
     }
 
     // Абзац 4: Эмоция и поза
-    if (isPortrait && (data.emotion || data.pose)) {
+    if (isPeopleObject && (data.emotion || data.pose)) {
       const emotionPoseParts: string[] = [];
       
       if (data.emotion) {
@@ -1153,6 +1532,12 @@ export default function App() {
       hair: '',
       hairColor: '',
       makeup: '',
+      faceShape: '',
+      skinTone: '',
+      eyebrows: '',
+      eyes: '',
+      lips: '',
+      nose: '',
       topClothing: '',
       topClothingColor: '',
       bottomClothing: '',
@@ -1179,7 +1564,7 @@ export default function App() {
     const randomPhotoType = randomChoice(photoTypeOptions);
     const availableObjects = getAvailableObjects(randomPhotoType);
     const randomObject = randomChoice(availableObjects);
-    const availableActions = getAvailableActions(randomObject);
+    const availableActions = getAvailableActions(randomObject, randomPhotoType);
     const randomAction = randomChoiceWithEmpty(availableActions, 0.4);
     
     const portraitTypes = ['Портрет', 'Fashion-фотография', 'Стрит-фото', 'Свадебная фотография'];
@@ -1202,6 +1587,12 @@ export default function App() {
       hair: isPortrait ? randomChoiceWithEmpty(hairOptions, 0.3) : '',
       hairColor: isPortrait && Math.random() > 0.3 ? randomChoice(hairColorOptions) : '',
       makeup: isPortrait ? randomChoiceWithEmpty(makeupOptions, 0.4) : '',
+      faceShape: isPortrait && peopleObjects.includes(randomObject) && Math.random() > 0.5 ? randomChoice(faceShapeOptions) : '',
+      skinTone: isPortrait && peopleObjects.includes(randomObject) && Math.random() > 0.5 ? randomChoice(skinToneOptions) : '',
+      eyebrows: isPortrait && peopleObjects.includes(randomObject) && Math.random() > 0.6 ? randomChoice(eyebrowsOptions) : '',
+      eyes: isPortrait && peopleObjects.includes(randomObject) && Math.random() > 0.6 ? randomChoice(eyesOptions) : '',
+      lips: isPortrait && peopleObjects.includes(randomObject) && Math.random() > 0.6 ? randomChoice(lipsOptions) : '',
+      nose: isPortrait && peopleObjects.includes(randomObject) && Math.random() > 0.6 ? randomChoice(noseOptions) : '',
       topClothing: isPortrait && peopleObjects.includes(randomObject) ? randomChoiceWithEmpty(topClothingOptions, 0.3) : '',
       topClothingColor: isPortrait && peopleObjects.includes(randomObject) && Math.random() > 0.3 ? randomChoice(clothingColorOptions) : '',
       bottomClothing: isPortrait && peopleObjects.includes(randomObject) ? randomChoiceWithEmpty(bottomClothingOptions, 0.3) : '',
@@ -1219,9 +1610,6 @@ export default function App() {
     
     setData(randomData);
   };
-
-  const portraitTypes = ['Портрет', 'Fashion-фотография', 'Стрит-фото', 'Свадебная фотография'];
-  const isPortraitType = portraitTypes.includes(data.photoType);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-950 via-purple-950 to-gray-950 text-white p-4">
@@ -1368,12 +1756,12 @@ export default function App() {
                     <SelectWithCustom
                       value={data.objectAction}
                       onChange={(v: string) => handleChange('objectAction', v)}
-                      options={getAvailableActions(data.object)}
+                      options={getAvailableActions(data.object, data.photoType)}
                       placeholder="Выберите или введите своё действие"
                     />
                   </div>
                 </div>
-                {isPortraitType && (
+                {peopleObjects.includes(data.object) && (
                   <>
                     <div>
                       <label className="block text-xs text-gray-400 mb-1">Возраст</label>
@@ -1439,6 +1827,86 @@ export default function App() {
                         >
                           <option value="">Не выбрано</option>
                           {poseOptions.map(opt => (
+                            <option key={opt} value={opt}>{opt}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-xs text-gray-400 mb-1">Форма лица</label>
+                        <select
+                          value={data.faceShape}
+                          onChange={(e) => handleChange('faceShape', e.target.value)}
+                          className="w-full px-3 py-2 bg-gray-800/50 border border-pink-500/30 rounded-lg text-white text-sm"
+                        >
+                          <option value="">Не выбрано</option>
+                          {faceShapeOptions.map(opt => (
+                            <option key={opt} value={opt}>{opt}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-xs text-gray-400 mb-1">Цвет кожи</label>
+                        <select
+                          value={data.skinTone}
+                          onChange={(e) => handleChange('skinTone', e.target.value)}
+                          className="w-full px-3 py-2 bg-gray-800/50 border border-pink-500/30 rounded-lg text-white text-sm"
+                        >
+                          <option value="">Не выбрано</option>
+                          {skinToneOptions.map(opt => (
+                            <option key={opt} value={opt}>{opt}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-xs text-gray-400 mb-1">Брови</label>
+                        <select
+                          value={data.eyebrows}
+                          onChange={(e) => handleChange('eyebrows', e.target.value)}
+                          className="w-full px-3 py-2 bg-gray-800/50 border border-pink-500/30 rounded-lg text-white text-sm"
+                        >
+                          <option value="">Не выбрано</option>
+                          {eyebrowsOptions.map(opt => (
+                            <option key={opt} value={opt}>{opt}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-xs text-gray-400 mb-1">Форма глаз</label>
+                        <select
+                          value={data.eyes}
+                          onChange={(e) => handleChange('eyes', e.target.value)}
+                          className="w-full px-3 py-2 bg-gray-800/50 border border-pink-500/30 rounded-lg text-white text-sm"
+                        >
+                          <option value="">Не выбрано</option>
+                          {eyesOptions.map(opt => (
+                            <option key={opt} value={opt}>{opt}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-xs text-gray-400 mb-1">Форма губ</label>
+                        <select
+                          value={data.lips}
+                          onChange={(e) => handleChange('lips', e.target.value)}
+                          className="w-full px-3 py-2 bg-gray-800/50 border border-pink-500/30 rounded-lg text-white text-sm"
+                        >
+                          <option value="">Не выбрано</option>
+                          {lipsOptions.map(opt => (
+                            <option key={opt} value={opt}>{opt}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-xs text-gray-400 mb-1">Форма носа</label>
+                        <select
+                          value={data.nose}
+                          onChange={(e) => handleChange('nose', e.target.value)}
+                          className="w-full px-3 py-2 bg-gray-800/50 border border-pink-500/30 rounded-lg text-white text-sm"
+                        >
+                          <option value="">Не выбрано</option>
+                          {noseOptions.map(opt => (
                             <option key={opt} value={opt}>{opt}</option>
                           ))}
                         </select>
