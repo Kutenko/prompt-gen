@@ -4,8 +4,6 @@ import { useState, useCallback, useEffect } from 'react';
 interface PromptData {
   photoType: string;
   photoStyle: string; // Стиль в рамках типа (журнал/художник/референс)
-  angle: string;
-  focalLength: string; // Фокусное расстояние
   distance: string; // Дистанция (план)
   focus: string;
   position: string;
@@ -22,11 +20,8 @@ interface PromptData {
   lips: string; // Форма губ
   nose: string; // Форма носа
   topClothing: string;
-  topClothingColor: string;
   bottomClothing: string;
-  bottomClothingColor: string;
   headwear: string;
-  headwearColor: string;
   emotion: string;
   pose: string;
   background: string;
@@ -49,19 +44,19 @@ const photoTypeOptions = [
 // чтобы это автоматически попадало в генерируемый промпт.
 const photoStyleOptions: Record<string, string[]> = {
   'Fashion-фотография': [
-    'глянцевая роскошь и высокая драматургия — идеальный силуэт, драматичный свет, безупречная детализация',
+    'глянцевая роскошь и высокая драматургия — идеальный силуэт, драматичное освещение, безупречная детализация',
     'элегантная утончённость — графичная композиция, выразительные контрасты, художественная отсылка в деталях',
-    'овременная женственность и динамичный оптимизм — свежий образ, естественные позы, актуальные акценты',
+    'современная женственность и динамичный оптимизм — свежий образ, естественная поза, актуальный акцент',
     'яркая повседневность и молодёжный драйв — смелое сочетание, живой ракурс, акцент на практичной детали',
-    'эмоциональная выразительность — пронзительный взгляд, тёплый свет, деталь с личным подтекстом',
+    'эмоциональная выразительность — пронзительный взгляд, тёплое освещение, деталь с личным подтекстом',
     'интеллектуальная роскошь — минималистичный фон, концептуальный аксессуар, выразительный силуэт, утончённая цветная гамма',
     'арт‑провокация — неожиданный ракурс, смелый цвет, художественная деталь вне канонов, строго монохромное изображение',
     'субкультурный авангард — ломаная композиция, дерзкий контраст, ироничный акцент, экспериментальная цветопередача',
     'бунтарская эклектика — стритстайл‑энергия, честный взгляд, деталь из субкультуры, чёрно-белые кадры',
-    'голливудский шик — масштабная постановка, драматичный портрет, богатая цветовая палитра, звёздный образ, кинематографичный свет',
+    'голливудский шик, драматичный портрет, богатая цветовая палитра, кинематографичное освещение',
   ],
   'Портрет': [
-    'кинематографичная, театральная выразительность: скульптурный свет, глубокие тени, смысловой реквизит и мощная статика, где асимметрия создаёт напряжение, а палитра подчёркивает драматизм образа, насыщенная цветная фотография',
+    'кинематографичная, театральная выразительность: скульптурный свет, глубокие тени, смысловой реквизит и мощная статика, асимметрия создаёт напряжение, а палитра подчёркивает драматизм образа, насыщенная цветная фотография',
     'строго чёрно-белое изображение, минималистичная эстетика, выразительная статика и лёгкая небрежность, без ретуши и театрального пафоса',
     'графичная выразительность: резкий контраст, чистый фон, динамичные позы и прямой взгляд, подчёркивает силу характера и энергию момента',
     'изысканная сдержанность: лаконичные композиции, выразительная светотень, нейтральный фон и безупречная детализация, где простота подчёркивает глубину образа и фактуру предмета',
@@ -118,17 +113,6 @@ const photoStyleOptions: Record<string, string[]> = {
   ],
 };
 
-// Фокусное расстояние с описаниями
-const focalLengthOptions = [
-  'широкоугольный объектив 16–24 мм, угол обзора очень большой',
-  'широкоугольный объектив 24–35 мм, угол обзора широкий',
-  'стандартный объектив 35–50 мм, естественная перспектива',
-  'портретный объектив 50–85 мм, мягкое размытие фона',
-  'телеобъектив 85–135 мм, сильное сжатие перспективы',
-  'длинный телеобъектив 135–200 мм, максимальное сжатие',
-  'супертелеобъектив 200+ мм, экстремальное сжатие перспективы',
-];
-
 // Дистанции (планы) с детальными описаниями
 const distanceOptions = [
   'Макро план — объект расположен очень близко к камере, занимает весь кадр, видны мельчайшие детали, поры кожи, текстура ткани, каждая ресница, фон полностью размыт',
@@ -138,26 +122,6 @@ const distanceOptions = [
   'Средне-дальний план — объект показан полностью от головы до ног, занимает 20-25% кадра, видна вся фигура, поза, одежда целиком, фон виден но размыт',
   'Общий план — объект виден целиком с окружением, занимает 10-15% кадра, видна фигура полностью, окружение чётко видно, объект вписан в пространство',
   'Дальний план — объект виден целиком, но маленький в кадре, занимает 5-10% кадра, окружение доминирует, объект вписан в пейзаж или архитектуру, виден масштаб',
-];
-
-// Ракурсы с детальными описаниями
-const angleOptions = [
-  'Фронтальный — камера расположена прямо перед объектом, взгляд направлен в объектив',
-  'Сверху (bird eye) — камера расположена высоко над объектом, вид сверху вниз',
-  'Снизу (worm eye) — камера расположена на уровне земли, вид снизу вверх',
-  '3/4 спереди — камера расположена под углом 45 градусов спереди от объекта',
-  '3/4 сзади — камера расположена под углом 45 градусов сзади от объекта',
-  'Профиль — камера расположена сбоку, виден профиль объекта',
-  'Сзади — камера расположена за объектом, видна спина',
-  'Голландский угол — камера наклонена под углом, создавая диагональную композицию',
-  'По диагонали сверху — камера расположена высоко и под углом, диагональный вид сверху',
-  'На уровне глаз — камера расположена на высоте глаз объекта, прямой взгляд',
-  'Сверхвысокий — камера расположена очень высоко, панорамный вид сверху',
-  'Сверхнизкий — камера расположена очень низко, экстремальный вид снизу',
-  'Крупный план лица — камера близко к лицу, видны все детали',
-  'Поясной план — камера показывает объект до пояса',
-  'Ростовой план — камера показывает объект полностью от головы до ног',
-  'Деталь — камера фокусируется на конкретной детали объекта',
 ];
 
 // Фокус (акцент на части)
@@ -696,27 +660,6 @@ const bottomClothingDescriptions: Record<string, string> = {
   'Широкие брюки': 'широкие брюки',
 };
 
-const clothingColorOptions = ['Чёрный', 'Белый', 'Серый', 'Красный', 'Синий', 'Зелёный', 'Жёлтый', 'Оранжевый', 'Розовый', 'Фиолетовый', 'Коричневый', 'Бежевый', 'Голубой', 'Бордовый', 'Тёмно-синий', 'Оливковый'];
-
-const clothingColorDescriptions: Record<string, string> = {
-  'Чёрный': 'чёрный',
-  'Белый': 'белый',
-  'Серый': 'серый',
-  'Красный': 'красный',
-  'Синий': 'синий',
-  'Зелёный': 'зелёный',
-  'Жёлтый': 'жёлтый',
-  'Оранжевый': 'оранжевый',
-  'Розовый': 'розовый',
-  'Фиолетовый': 'фиолетовый',
-  'Коричневый': 'коричневый',
-  'Бежевый': 'бежевый',
-  'Голубой': 'голубой',
-  'Бордовый': 'бордовый',
-  'Тёмно-синий': 'тёмно-синий',
-  'Оливковый': 'оливковый',
-};
-
 // Головные уборы
 const headwearOptions = ['Шляпа', 'Бейсболка', 'Берет', 'Панама', 'Шапка', 'Повязка на голову', 'Ободок', 'Платок', 'Тюрбан', 'Кепка', 'Капюшон'];
 
@@ -732,23 +675,6 @@ const headwearDescriptions: Record<string, string> = {
   'Тюрбан': 'тюрбан',
   'Кепка': 'кепка',
   'Капюшон': 'капюшон',
-};
-
-const headwearColorOptions = ['Чёрный', 'Белый', 'Серый', 'Красный', 'Синий', 'Зелёный', 'Жёлтый', 'Оранжевый', 'Розовый', 'Фиолетовый', 'Коричневый', 'Бежевый'];
-
-const headwearColorDescriptions: Record<string, string> = {
-  'Чёрный': 'чёрного цвета',
-  'Белый': 'белого цвета',
-  'Серый': 'серого цвета',
-  'Красный': 'красного цвета',
-  'Синий': 'синего цвета',
-  'Зелёный': 'зелёного цвета',
-  'Жёлтый': 'жёлтого цвета',
-  'Оранжевый': 'оранжевого цвета',
-  'Розовый': 'розового цвета',
-  'Фиолетовый': 'фиолетового цвета',
-  'Коричневый': 'коричневого цвета',
-  'Бежевый': 'бежевого цвета',
 };
 
 // Эмоции
@@ -879,24 +805,16 @@ const backgroundDescriptions: Record<string, string> = {
 // Системные промпты для качества
 const systemPromptPresets = [
   {
-    name: 'Фотореализм (высокое качество)',
-    prompt: 'Фотореалистичное изображение, 8K, профессиональная студийная фотография, высокая детализация, естественные цвета, мягкое студийное освещение с естественными тенями, глубина резкости, высокая детализация кожи, никакого чрезмерного ретуширования',
+    name: 'Фотореализм (портрет)',
+    prompt: 'Фотореалистичное изображение, глубина резкости, высокая детализация кожи, натуральная текстура кожи, мягкие микро-тени, без чрезмерного сглаживания, чёткие симметричные глаза, высокая детализация текстуры глаз, реалистичные черты лица, высокая детализация лица, Высокая детализация текстуры волос. без плоских заливок, без текста, без логотипов',
   },
   {
-    name: 'Beauty (косметика/уход)',
-    prompt: 'Фотореалистичное изображение, 8K, editorial beauty photography, эффект glass skin, сияющая увлажнённая кожа, лёгкий dewy-финиш, натуральный макияж no makeup makeup, тёплые естественные тона кожи, мягкое студийное освещение, белый фон',
-  },
-  {
-    name: 'Fashion editorial',
-    prompt: 'Фотореалистичное изображение, 8K, профессиональная fashion съёмка, высокая детализация тканей и текстур, драматичное освещение, глубокие тени, кинематографичность, журнальная эстетика',
-  },
-  {
-    name: 'Портрет (характер)',
-    prompt: 'Фотореалистичное изображение, 8K, профессиональный портрет, высокая детализация кожи с порами и естественной текстурой, выразительный взгляд, мягкое освещение Rembrandt, глубокие тени, кинематографичность',
+    name: 'Фотореализм (архитектура)',
+    prompt: 'Фотореалистичное изображение, глубокий контраст света и тени, естественная цветокоррекция, высокая детализация фактур, мягкие тени, без цифрового шума и чрезмерной резкости, кинематографичное освещение и чёткая перспектива, выразительные ведущие линии и ритм форм',
   },
   {
     name: 'Предметная съёмка (продукт)',
-    prompt: 'Фотореалистичное изображение, 8K, профессиональная предметная съёмка, высокая детализация текстур и материалов, чистый фон, мягкое студийное освещение, акцент на продукте, коммерческая эстетика',
+    prompt: 'Фотореалистичное изображение, профессиональная предметная съёмка, мягкий рассеянный студийный свет без резких теней, точная цветопередача и высокая детализация фактур. Чёткая проработка мелких элементов, реалистичные отражения и блики, без искажений пропорций и лишних деталей; фокус строго на объекте, глубина резкости оптимальная для демонстрации формы',
   },
 ];
 
@@ -971,8 +889,6 @@ export default function App() {
   const [data, setData] = useState<PromptData>({
     photoType: 'Fashion-фотография',
     photoStyle: '',
-    angle: 'Фронтальный',
-    focalLength: '',
     distance: '',
     focus: '',
     position: '',
@@ -989,11 +905,8 @@ export default function App() {
     lips: '',
     nose: '',
     topClothing: '',
-    topClothingColor: '',
     bottomClothing: '',
-    bottomClothingColor: '',
     headwear: '',
-    headwearColor: '',
     emotion: '',
     pose: '',
     background: '',
@@ -1069,20 +982,8 @@ export default function App() {
     }
 
     // Абзац 2: Композиция
-    if (data.angle || data.focalLength || data.focus || data.position || data.distance) {
+    if (data.focus || data.position || data.distance) {
       const compParts: string[] = [];
-      
-      if (data.angle) {
-        // Убираем название ракурса, оставляем только описание после тире
-        const angleDesc = data.angle.includes(' — ') 
-          ? data.angle.split(' — ')[1] 
-          : data.angle;
-        compParts.push(angleDesc);
-      }
-      
-      if (data.focalLength) {
-        compParts.push(data.focalLength);
-      }
       
       if (data.focus) {
         compParts.push(data.focus);
@@ -1139,22 +1040,14 @@ export default function App() {
           clothing.push(makeupDescriptions[data.makeup] || data.makeup);
         }
         if (data.topClothing) {
-          let top = topClothingDescriptions[data.topClothing] || data.topClothing;
-          if (data.topClothingColor) top += ` ${clothingColorDescriptions[data.topClothingColor] || data.topClothingColor} цвета`;
-          clothing.push(top);
+          clothing.push(topClothingDescriptions[data.topClothing] || data.topClothing);
         }
         if (data.bottomClothing) {
-          let bottom = bottomClothingDescriptions[data.bottomClothing] || data.bottomClothing;
-          if (data.bottomClothingColor) bottom += ` ${clothingColorDescriptions[data.bottomClothingColor] || data.bottomClothingColor} цвета`;
-          clothing.push(bottom);
+          clothing.push(bottomClothingDescriptions[data.bottomClothing] || data.bottomClothing);
         }
         
         if (data.headwear) {
-          let headwearDesc = headwearDescriptions[data.headwear] || data.headwear;
-          if (data.headwearColor) {
-            headwearDesc += ' ' + (headwearColorDescriptions[data.headwearColor] || data.headwearColor);
-          }
-          clothing.push(headwearDesc);
+          clothing.push(headwearDescriptions[data.headwear] || data.headwear);
         }
         
         if (clothing.length) {
@@ -1361,8 +1254,6 @@ export default function App() {
     setData({
       photoType: 'Fashion-фотография',
       photoStyle: '',
-      angle: 'Фронтальный',
-      focalLength: '',
       distance: '',
       focus: '',
       position: '',
@@ -1379,11 +1270,8 @@ export default function App() {
       lips: '',
       nose: '',
       topClothing: '',
-      topClothingColor: '',
       bottomClothing: '',
-      bottomClothingColor: '',
       headwear: '',
-      headwearColor: '',
       emotion: '',
       pose: '',
       background: '',
@@ -1412,8 +1300,6 @@ export default function App() {
     const randomData: PromptData = {
       photoType: randomPhotoType,
       photoStyle: randomChoiceWithEmpty(availableStyles, 0.4),
-      angle: randomChoice(angleOptions),
-      focalLength: randomChoiceWithEmpty(focalLengthOptions, 0.4),
       distance: randomChoiceWithEmpty(distanceOptions, 0.4),
       focus: randomChoiceWithEmpty(focusOptions, 0.3),
       position: randomChoiceWithEmpty(positionOptions, 0.4),
@@ -1430,11 +1316,8 @@ export default function App() {
       lips: isPortrait && peopleObjects.includes(randomObject) && Math.random() > 0.6 ? randomChoice(lipsOptions) : '',
       nose: isPortrait && peopleObjects.includes(randomObject) && Math.random() > 0.6 ? randomChoice(noseOptions) : '',
       topClothing: isPortrait && peopleObjects.includes(randomObject) ? randomChoiceWithEmpty(topClothingOptions, 0.3) : '',
-      topClothingColor: isPortrait && peopleObjects.includes(randomObject) && Math.random() > 0.3 ? randomChoice(clothingColorOptions) : '',
       bottomClothing: isPortrait && peopleObjects.includes(randomObject) ? randomChoiceWithEmpty(bottomClothingOptions, 0.3) : '',
-      bottomClothingColor: isPortrait && peopleObjects.includes(randomObject) && Math.random() > 0.3 ? randomChoice(clothingColorOptions) : '',
       headwear: isPortrait && peopleObjects.includes(randomObject) ? randomChoiceWithEmpty(headwearOptions, 0.6) : '',
-      headwearColor: isPortrait && peopleObjects.includes(randomObject) && Math.random() > 0.5 ? randomChoice(headwearColorOptions) : '',
       emotion: isPortrait ? randomChoiceWithEmpty(emotionOptions, 0.3) : '',
       pose: isPortrait ? randomChoiceWithEmpty(poseOptions, 0.3) : '',
       background: randomChoiceWithEmpty(backgroundOptions, 0.4),
@@ -1489,32 +1372,6 @@ export default function App() {
             <div className="bg-black/30 backdrop-blur-sm rounded-2xl border border-blue-500/20 p-5">
               <h2 className="text-lg font-semibold text-blue-300 mb-4">📐 Композиция</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs text-gray-400 mb-1">Ракурс</label>
-                  <select
-                    value={data.angle}
-                    onChange={(e) => handleChange('angle', e.target.value)}
-                    className="w-full px-3 py-2 bg-gray-800/50 border border-blue-500/30 rounded-lg text-white text-sm"
-                  >
-                    <option value="">Не выбрано</option>
-                    {angleOptions.map(opt => (
-                      <option key={opt} value={opt}>{opt}</option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-xs text-gray-400 mb-1">Фокусное расстояние</label>
-                  <select
-                    value={data.focalLength}
-                    onChange={(e) => handleChange('focalLength', e.target.value)}
-                    className="w-full px-3 py-2 bg-gray-800/50 border border-blue-500/30 rounded-lg text-white text-sm"
-                  >
-                    <option value="">Не выбрано</option>
-                    {focalLengthOptions.map(opt => (
-                      <option key={opt} value={opt}>{opt}</option>
-                    ))}
-                  </select>
-                </div>
                 <div>
                   <label className="block text-xs text-gray-400 mb-1">Дистанция (план)</label>
                   <select
@@ -1745,57 +1602,21 @@ export default function App() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <div>
                       <label className="block text-xs text-gray-400 mb-1">Одежда (верх)</label>
-                      <select
+                      <SelectWithCustom
                         value={data.topClothing}
-                        onChange={(e) => handleChange('topClothing', e.target.value)}
-                        className="w-full px-3 py-2 bg-gray-800/50 border border-indigo-500/30 rounded-lg text-white text-sm"
-                      >
-                        <option value="">Не выбрано</option>
-                        {topClothingOptions.map(opt => (
-                          <option key={opt} value={opt}>{opt}</option>
-                        ))}
-                      </select>
+                        onChange={(v: string) => handleChange('topClothing', v)}
+                        options={topClothingOptions}
+                        placeholder="Выберите или введите свой вариант верха"
+                      />
                     </div>
-                    <div>
-                      <label className="block text-xs text-gray-400 mb-1">Цвет верха</label>
-                      <select
-                        value={data.topClothingColor}
-                        onChange={(e) => handleChange('topClothingColor', e.target.value)}
-                        className="w-full px-3 py-2 bg-gray-800/50 border border-indigo-500/30 rounded-lg text-white text-sm"
-                      >
-                        <option value="">Не выбрано</option>
-                        {clothingColorOptions.map(opt => (
-                          <option key={opt} value={opt}>{opt}</option>
-                        ))}
-                      </select>
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <div>
                       <label className="block text-xs text-gray-400 mb-1">Одежда (низ)</label>
-                      <select
+                      <SelectWithCustom
                         value={data.bottomClothing}
-                        onChange={(e) => handleChange('bottomClothing', e.target.value)}
-                        className="w-full px-3 py-2 bg-gray-800/50 border border-indigo-500/30 rounded-lg text-white text-sm"
-                      >
-                        <option value="">Не выбрано</option>
-                        {bottomClothingOptions.map(opt => (
-                          <option key={opt} value={opt}>{opt}</option>
-                        ))}
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-xs text-gray-400 mb-1">Цвет низа</label>
-                      <select
-                        value={data.bottomClothingColor}
-                        onChange={(e) => handleChange('bottomClothingColor', e.target.value)}
-                        className="w-full px-3 py-2 bg-gray-800/50 border border-indigo-500/30 rounded-lg text-white text-sm"
-                      >
-                        <option value="">Не выбрано</option>
-                        {clothingColorOptions.map(opt => (
-                          <option key={opt} value={opt}>{opt}</option>
-                        ))}
-                      </select>
+                        onChange={(v: string) => handleChange('bottomClothing', v)}
+                        options={bottomClothingOptions}
+                        placeholder="Выберите или введите свой вариант низа"
+                      />
                     </div>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -1814,30 +1635,13 @@ export default function App() {
                     </div>
                     <div>
                       <label className="block text-xs text-gray-400 mb-1">Головной убор</label>
-                      <select
+                      <SelectWithCustom
                         value={data.headwear}
-                        onChange={(e) => handleChange('headwear', e.target.value)}
-                        className="w-full px-3 py-2 bg-gray-800/50 border border-indigo-500/30 rounded-lg text-white text-sm"
-                      >
-                        <option value="">Не выбрано</option>
-                        {headwearOptions.map(opt => (
-                          <option key={opt} value={opt}>{opt}</option>
-                        ))}
-                      </select>
+                        onChange={(v: string) => handleChange('headwear', v)}
+                        options={headwearOptions}
+                        placeholder="Выберите или введите свой вариант головного убора"
+                      />
                     </div>
-                  </div>
-                  <div>
-                    <label className="block text-xs text-gray-400 mb-1">Цвет головного убора</label>
-                    <select
-                      value={data.headwearColor}
-                      onChange={(e) => handleChange('headwearColor', e.target.value)}
-                      className="w-full px-3 py-2 bg-gray-800/50 border border-indigo-500/30 rounded-lg text-white text-sm"
-                    >
-                      <option value="">Не выбрано</option>
-                      {headwearColorOptions.map(opt => (
-                        <option key={opt} value={opt}>{opt}</option>
-                      ))}
-                    </select>
                   </div>
                 </div>
               </div>
