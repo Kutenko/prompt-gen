@@ -31,8 +31,6 @@ interface PromptData {
   pose: string;
   background: string;
   systemPrompt: string; // Системный промпт для качества
-  negatives: string[];
-  customNegative: string;
 }
 
 // Типы фотографии
@@ -902,23 +900,6 @@ const systemPromptPresets = [
   },
 ];
 
-// Negative prompt
-const negativeItems = [
-  'перегруженный кадр',
-  'лишние предметы рядом с объектом',
-  'хаос',
-  'резкие тени',
-  'низкая резкость',
-  'зернистость',
-  'текст',
-  'логотипы',
-  'блики',
-  'неестественная кожа',
-  'мусор / грязь',
-  'водяные знаки',
-  'случайные люди в кадре',
-];
-
 // Компонент для выбора из списка или ввода своего значения
 function SelectWithCustom({
   value,
@@ -1017,8 +998,6 @@ export default function App() {
     pose: '',
     background: '',
     systemPrompt: '',
-    negatives: [...negativeItems],
-    customNegative: '',
   });
 
   const [generatedPrompt, setGeneratedPrompt] = useState('');
@@ -1061,15 +1040,6 @@ export default function App() {
       
       return newData;
     });
-  };
-
-  const toggleNegative = (item: string) => {
-    setData(prev => ({
-      ...prev,
-      negatives: prev.negatives.includes(item)
-        ? prev.negatives.filter(n => n !== item)
-        : [...prev.negatives, item],
-    }));
   };
 
   const generatePrompt = useCallback(() => {
@@ -1216,15 +1186,6 @@ export default function App() {
     if (data.background) {
       const bgDesc = backgroundDescriptions[data.background] || data.background;
       paragraphs.push(`На заднем плане виднеется ${bgDesc}.`);
-    }
-
-    // Negative prompt
-    const negativeList = [
-      ...data.negatives,
-      ...(data.customNegative.trim() ? data.customNegative.split(',').map(s => s.trim()).filter(Boolean) : []),
-    ];
-    if (negativeList.length) {
-      paragraphs.push(`Negative prompt: ${negativeList.join(', ')}.`);
     }
 
     // Объединяем все части в один параграф без переносов
@@ -1427,8 +1388,6 @@ export default function App() {
       pose: '',
       background: '',
       systemPrompt: '',
-      negatives: [...negativeItems],
-      customNegative: '',
     });
     setGeneratedPrompt('');
   };
@@ -1480,8 +1439,6 @@ export default function App() {
       pose: isPortrait ? randomChoiceWithEmpty(poseOptions, 0.3) : '',
       background: randomChoiceWithEmpty(backgroundOptions, 0.4),
       systemPrompt: randomChoiceWithEmpty(systemPromptPresets.map(p => p.prompt), 0.5),
-      negatives: [...negativeItems],
-      customNegative: '',
     };
     
     setData(randomData);
@@ -1929,33 +1886,6 @@ export default function App() {
                   />
                 </div>
               </div>
-            </div>
-
-            {/* Negative prompt */}
-            <div className="bg-black/30 backdrop-blur-sm rounded-2xl border border-red-500/20 p-5">
-              <h2 className="text-lg font-semibold text-red-300 mb-4">🚫 Negative prompt</h2>
-              <div className="flex flex-wrap gap-2 mb-3">
-                {negativeItems.map(item => (
-                  <button
-                    key={item}
-                    onClick={() => toggleNegative(item)}
-                    className={`px-3 py-1 rounded-lg text-xs transition-all ${
-                      data.negatives.includes(item)
-                        ? 'bg-red-600/30 border border-red-500/50 text-red-200'
-                        : 'bg-gray-800/30 border border-gray-700/30 text-gray-500 hover:border-gray-500/50'
-                    }`}
-                  >
-                    {data.negatives.includes(item) ? '✕' : '+'} {item}
-                  </button>
-                ))}
-              </div>
-              <input
-                type="text"
-                value={data.customNegative}
-                onChange={(e) => handleChange('customNegative', e.target.value)}
-                placeholder="Добавить свои ограничения через запятую..."
-                className="w-full px-3 py-2 bg-gray-800/50 border border-red-500/30 rounded-lg text-white text-sm"
-              />
             </div>
 
             {/* Кнопки */}
